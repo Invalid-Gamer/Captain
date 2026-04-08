@@ -1,16 +1,17 @@
 import time
 
-from sensors import battery_ampere
-from sensors import battery_voltage
+from Sensoren import battery_ampere
+from Sensoren import Batterie
+from motors import deathrun
 
 def main():
     print("===Testmode ===")
-    chan0 = battery_ampere.initmcp()
-    chan1 = battery_voltage.initmcp()
-    while True:
-        battery_ampere.readampere(chan0)
-        battery_voltage.readvoltage(chan1)
-        time.sleep(0.5)
+    chan0, chan1, chan2, chan3 = Batterie.initmcp()
+
+    battery_ampere.readampere(chan0)
+    Batterie.read_voltage(chan1)
+    time.sleep(0.5)
+    deathrun.deathrun(5,True,25)
 
 
 
