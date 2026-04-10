@@ -3,12 +3,10 @@ import struct
 import random
 import time
 
+from Comm.inputHandler import inputHandler
 from Sensoren import ADC
 from Sensoren.ADC import ADC
 
-global latest_udp_data_x
-global latest_udp_data_y
-global latest_udp_data_mode
 latest_tcp_msg = ""
 active_tcp_connection = None
 TCP_PORT = 9006
@@ -75,6 +73,7 @@ def udpHandler():
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     latest_udp_data_mode = mode
+                    inputHandler(latest_udp_data_y)
             except: pass
 
 def connHandler(adc):

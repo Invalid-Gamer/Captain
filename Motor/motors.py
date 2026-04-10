@@ -8,7 +8,7 @@ import time
 import pins
 
 
-def vorwaerts(t: int, speed: int) -> None:
+def vorwaerts(speed: int) -> None:
     dir2 = digitalio.DigitalInOut(pins.DIR2)
     dir2.direction = digitalio.Direction.OUTPUT
 
@@ -17,8 +17,6 @@ def vorwaerts(t: int, speed: int) -> None:
     # true = vorwaerts
     dir2.value = True
     pwm2.duty_cycle = int(speed/100*65535) # 16-bit: 0–65535
-
-    time.sleep(t)
 
     #stops and deinit things
     pwm2.duty_cycle = 0
