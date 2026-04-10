@@ -2,7 +2,7 @@
 written by Jannik Czinzoll
 """
 import digitalio
-import pvmio
+import pwmio
 import time
 
 import pins
@@ -12,7 +12,7 @@ def deathrun(t: int, dir: bool, speed: int) -> None:
     dir2 = digitalio.DigitalInOut(pins.DIR2)
     dir2.direction = digitalio.Direction.OUTPUT
 
-    pvm2 = pvmio.PVMOUT(pins.PVM2, frequency=1000, duty_cycle=0)
+    pvm2 = pwmio.PVMOUT(pins.PVM2, frequency=1000, duty_cycle=0)
 
     # true = vorwaerts
     dir2.value = dir
@@ -24,3 +24,6 @@ def deathrun(t: int, dir: bool, speed: int) -> None:
     pvm2.duty_cycle = 0
     pvm2.deinit()
     dir2.deinit()
+
+
+
