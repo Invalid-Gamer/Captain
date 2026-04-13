@@ -3,7 +3,7 @@ import struct
 import random
 import time
 
-from Comm.inputHandler import inputHandler
+import inputHandler
 from Sensoren import ADC
 from Sensoren.ADC import ADC
 
@@ -68,7 +68,7 @@ def udpHandler():
         while True:
             try:
                 data, addr = sock.recvfrom(1024)
-                if len(data) <= 5:
+                if len(data) >= 5:
                     x, y, mode = struct.unpack('<HHB', data[:5])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
@@ -100,15 +100,9 @@ def connHandler(adc):
                     if msg:
                         print(f"ESP Nachricht: {msg}")
                 except socket.timeout:
-                    # Das ist okay, bedeutet nur: ESP hat gerade nichts gesendet
                     pass
-
-                # JETZT: Sende die aktuellen Werte (z.B. Ampere)
-                # Wir übergeben conn direkt an die Sende-Funktion
                 current_ampere = adc.get_ampere(0)
                 sendRealValues(current_ampere, 0)
-
-                time.sleep(0.1)  # Kleine Pause zur Schonung der CPU
 
             except Exception as e:
                 print(f"Fehler in der Verbindung: {e}")
