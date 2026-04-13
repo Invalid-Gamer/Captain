@@ -1,23 +1,32 @@
 import time
 import threading
+from Sensoren import ADC, Batterie_Prozent
+import Comm
 
-from Sensoren import ADC
-from Sensoren import Batterie_Prozent
-from Comm import inputHandler
-from Comm import Comm
 
 def main():
     adc = ADC.ADC()
-    t1 = threading.Thread(target=Comm.connHandler, args=(adc,))
+
+    # Threads für Kommunikation starten
+    t1 = threading.Thread(target=Comm.connHandler, args=(adc,), daemon=True)
     t1.start()
-    t2 = threading.Thread(target=Comm.udpHandler)
+
+    t2 = threading.Thread(target=Comm.udpHandler, daemon=True)
     t2.start()
 
-    print(adc.get_ampere(0))
-    print(adc.get_12voltage(1))
-
-    t3 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
+    # Telemetrie Thread
+    t3 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,), daemon=True)
     t3.start()
+
+    print("--- System gestartet ---")
+
+    # Haupt-Thread am Leben halten
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Shutdown...")
+
 
 if __name__ == '__main__':
     main()
