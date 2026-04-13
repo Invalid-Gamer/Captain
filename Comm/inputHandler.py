@@ -1,13 +1,11 @@
 from Motor.motors import vorwaerts
-import Comm  # Importiert das ganze Modul
+import Comm
 
 def inputHandler(y):
-    # Prüfe die Variable direkt im Comm-Modul (keine lokale Kopie!)
+    # Wir prüfen direkt den Status in Comm
     if Comm.active_tcp_connection is not None:
         if y > 1950:
-            # Berechnung des Prozentwerts (0-100)
             movement_y = ((y - 1950) / (4095 - 1950)) * 100
             vorwaerts(movement_y)
         else:
-            # Motor stoppen, wenn Stick in Neutralstellung
             vorwaerts(0)
