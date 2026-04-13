@@ -73,7 +73,6 @@ def udpHandler():
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     latest_udp_data_mode = mode
-                    print(latest_udp_data_x, latest_udp_data_y, latest_udp_data_mode)
                     inputHandler(latest_udp_data_y)
             except: pass
 
