@@ -3,21 +3,22 @@ import threading
 
 from Sensoren import ADC
 from Sensoren import Batterie_Prozent
-from Comm import inputHandler
+from Comm.Comm import udpHandler
 from Comm import Comm
 
 def main():
     adc = ADC.ADC()
     t1 = threading.Thread(target=Comm.connHandler, args=(adc,))
     t1.start()
-    t2 = threading.Thread(target=Comm.udpHandler)
-    t2.start()
-
+    #t2 = threading.Thread(target=Comm.udpHandler)
+    #t2.start()
     print(adc.get_ampere(0))
     print(adc.get_12voltage(1))
 
-    t3 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
-    t3.start()
+    #t3 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
+    #t3.start()
+    while True:
+        udpHandler()
 
 if __name__ == '__main__':
     main()
