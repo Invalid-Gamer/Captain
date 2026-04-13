@@ -76,22 +76,44 @@ def udpHandler():
                     inputHandler(latest_udp_data_y)
             except: pass
 
+
 def connHandler(adc):
-    global active_tcp_connection, latest_tcp_msg
+    global active_tcp_connection
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("0.0.0.0", TCP_PORT))
     sock.listen(1)
+
     while True:
         conn, addr = sock.accept()
         active_tcp_connection = conn
+        print(f"ESP32 verbunden: {addr}")
+
         while True:
             try:
-                data = conn.recv(1024)
-                if not data: break
-                msg = data.decode('utf-8', errors='ignore').strip()
-                sendRealValues(adc.get_ampere(0), 0)
-            except: break
+                conn.settimeout(0.2)
+
+                try:
+                    data = conn.recv(1024)
+                    if not data: break  # ESP hat Verbindung getrennt
+                    msg = data.decode('utf-8', errors='ignore').strip()
+                    if msg:
+                        print(f"ESP Nachricht: {msg}")
+                except socket.timeout:
+                    # Das ist okay, bedeutet nur: ESP hat gerade nichts gesendet
+                    pass
+
+                # JETZT: Sende die aktuellen Werte (z.B. Ampere)
+                # Wir übergeben conn direkt an die Sende-Funktion
+                current_ampere = adc.get_ampere(0)
+                sendRealValues(current_ampere, 0)
+
+                time.sleep(0.1)  # Kleine Pause zur Schonung der CPU
+
+            except Exception as e:
+                print(f"Fehler in der Verbindung: {e}")
+                break
+
         active_tcp_connection = None
         conn.close()
-
+        print("Verbindung geschlossen.")
