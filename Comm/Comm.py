@@ -62,19 +62,25 @@ def handle_incoming_udp(sock):
     return None
 
 def udpHandler():
-    if active_tcp_connection:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    global latest_udp_data_x, latest_udp_data_y, latest_udp_data_mode
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
         sock.bind(('0.0.0.0', UDP_PORT))
-        while True:
-            try:
-                data, addr = sock.recvfrom(1024)
-                if len(data) >= 5:
-                    x, y, mode = struct.unpack('<HHB', data[:5])
-                    latest_udp_data_x = x
-                    latest_udp_data_y = y
-                    latest_udp_data_mode = mode
-                    inputHandler(latest_udp_data_y)
-            except: pass
+    except Exception as e:
+        return
+
+    while True:
+        try:
+            data, addr = sock.recvfrom(1024)
+
+            if len(data) >= 5:
+                x, y, mode = struct.unpack('<HHB', data[:5])
+                latest_udp_data_x = x
+                latest_udp_data_y = y
+                latest_udp_data_mode = mode
+                inputHandler(latest_udp_data_y)
+        except Exception as e:
+            pass
 
 
 def connHandler(adc):
