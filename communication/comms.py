@@ -1,3 +1,4 @@
+import logging
 import socket
 import struct
 import random
@@ -74,21 +75,42 @@ def udpHandler():
             except: pass
 
 def connHandler(adc):
-    global active_tcp_connection, latest_tcp_msg
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("0.0.0.0", TCP_PORT))
-    sock.listen(1)
+    global active_tcp_connection, latest_tcp_msg, currentMode
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    tcp_sock.bind(("0.0.0.0", TCP_PORT))
+    tcp_sock.listen(1)
+    tcp_sock.setblocking(False)
+    currentMode = 0
+    active_tcp_connection = None
+
+    udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_sock.bind(("0.0.0.0", UDP_PORT))
+    udp_sock.settimeout(0.01)
+
     while True:
-        conn, addr = sock.accept()
+        conn, addr = tcp_sock.accept()
         active_tcp_connection = conn
-        while True:
-            try:
-                data = conn.recv(1024)
-                if not data: break
-                msg = data.decode('utf-8', errors='ignore').strip()
-                sendRealValues(adc.get_ampere(0), 0)
-            except: break
-        active_tcp_connection = None
-        conn.close()
+        try:
+            while True:
+                if active_tcp_connection is None:
+                    try:
+                        conn, addr = tcp_sock.accept()
+                        active_tcp_connection = conn
+                        active_tcp_connection.setblocking(False)
+                    except BlockingIOError:
+                        pass
+                else:
+                    try:
+                        data = active_tcp_connection.recv(1024)
+                        if not data:
+                            active_tcp_connection.close()
+                            active_tcp_connection = None
+                        else:
+                            msg = data.decode('utf-8', errors='ignore').strip()
+                            logging.debug(msg)
+                    except BlockingIOError:
+                        pass
+                    except Exception:
+                        active_tcp_connection = None
 
