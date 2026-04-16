@@ -1,33 +1,39 @@
 from communication.comms import active_tcp_connection
 from comps.motors.motors import vorwaerts, rueckwaerts, stop, rechts, links, keineAhnungDigga
 import globals
+from globals import current_mode
+
 VELOCITY = 50
 DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
 def inputHandler(x,y):
     if active_tcp_connection:
-        if y > DEADZONE_POS:
-            speed = ((y - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
-            speed = max(0.0, min(100.0, speed))
-            vorwaerts(speed)
-        elif y < DEADZONE_NEG:
-            speed = ((DEADZONE_NEG - y) / DEADZONE_NEG) * VELOCITY
-            speed = max(0.0, min(100.0, speed))
-            rueckwaerts(speed)
+        if current_mode == 1 or current_mode == 2:
+            if y > DEADZONE_POS:
+                speed = ((y - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
+                speed = max(0.0, min(100.0, speed))
+                vorwaerts(speed)
+            elif y < DEADZONE_NEG:
+                speed = ((DEADZONE_NEG - y) / DEADZONE_NEG) * VELOCITY
+                speed = max(0.0, min(100.0, speed))
+                rueckwaerts(speed)
+            else:
+                stop()
+
+            if x > DEADZONE_POS:
+                speed = ((x - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
+                speed = max(0.0, min(100.0, speed))
+                rechts(speed)
+            elif x < DEADZONE_NEG:
+                speed = ((DEADZONE_NEG - x) / DEADZONE_NEG) * VELOCITY
+                speed = max(0.0, min(100.0, speed))
+                links(speed)
+            else:
+                keineAhnungDigga()
         else:
             stop()
-
-        if x > DEADZONE_POS:
-            speed = ((x - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
-            speed = max(0.0, min(100.0, speed))
-            rechts(speed)
-        elif x < DEADZONE_NEG:
-            speed = ((DEADZONE_NEG - x) / DEADZONE_NEG) * VELOCITY
-            speed = max(0.0, min(100.0, speed))
-            links(speed)
-        else:
             keineAhnungDigga()
-    else:
+    elif current_mode == 0:
         stop()
         keineAhnungDigga()
 def msgHanlder(msg):
