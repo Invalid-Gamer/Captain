@@ -80,6 +80,7 @@ def udpHandler():
             except: pass
 
 def connHandler(adc):
+    t1 = threading.Thread(target=udpHandler)
     global active_tcp_connection, latest_tcp_msg, currentMode
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -106,7 +107,6 @@ def connHandler(adc):
                     except BlockingIOError:
                         pass
                 else:
-                    t1 = threading.Thread(target=udpHandler)
                     t1.start()
                     try:
                         data = active_tcp_connection.recv(1024)

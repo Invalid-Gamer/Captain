@@ -5,7 +5,7 @@ from comps.sensors import ADC, Batterie_Prozent
 from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
 from backend import logs, status_meldung
-import gloals
+import globals
 
 def main():
     logs.log_handler()
@@ -20,8 +20,6 @@ def main():
 
     t1 = threading.Thread(target=comms.connHandler, args=(adc,))
     t1.start()
-    t2 = threading.Thread(target=comms.udpHandler)
-    t2.start()
 
     print(adc.get_ampere(0))
     print(adc.get_12voltage(1))
