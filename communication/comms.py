@@ -6,7 +6,7 @@ import threading
 
 from communication.inputHandler import inputHandler
 from comps.motors.motors import keineAhnungDigga, stop
-from globals import current_mode
+import globals
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -108,8 +108,8 @@ def connHandler(adc):
                             msg = data.decode('utf-8', errors='ignore').strip()
                             key, value = msg.split(':')
                             if key == "mode":
-                                current_mode = value
-                                logging.debug(f"Current Mode: {current_mode}")
+                                globals.current_mode = value
+                                logging.debug(f"Current Mode: {globals.current_mode}")
                             else:
                                 logging.debug(f"Command nicht gefunden: {key}:{value}")
                             logging.debug(msg)
