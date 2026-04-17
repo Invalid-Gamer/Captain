@@ -6,7 +6,7 @@ import threading
 
 from communication.inputHandler import inputHandler
 from comps.motors.motors import keineAhnungDigga, stop
-import globals
+from globals import current_mode
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -80,13 +80,12 @@ def udpHandler():
 
 def connHandler(adc):
     t1 = threading.Thread(target=udpHandler)
-    global active_tcp_connection, latest_tcp_msg, currentMode
+    global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     tcp_sock.bind(("0.0.0.0", TCP_PORT))
     tcp_sock.listen(1)
     tcp_sock.setblocking(False)
-    currentMode = 0
     active_tcp_connection = None
 
     while True:
@@ -107,6 +106,11 @@ def connHandler(adc):
                             active_tcp_connection = None
                         else:
                             msg = data.decode('utf-8', errors='ignore').strip()
+                            key, value = msg.split(':')
+                            if key == "mode":
+                                current_mode = value
+                            else:
+                                logging.debug(f"Command nicht gefunden: {key}:{value}")
                             logging.debug(msg)
 
                     except BlockingIOError:
