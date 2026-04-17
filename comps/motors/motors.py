@@ -34,7 +34,7 @@ def links(speed: float) -> None:
     pwm1 = pwmio.PWMOut(globals.PWM1, frequency=1000, duty_cycle=0)
 
     # true = vorwaerts
-    dir1.value = True
+    dir1.value = False
     pwm1.duty_cycle = int(speed/100*65535) # 16-bit: 0–65535
 
 def rechts(speed: float):
@@ -44,7 +44,7 @@ def rechts(speed: float):
     pwm1 = pwmio.PWMOut(globals.PWM1, frequency=1000, duty_cycle=0)
 
     # true = vorwaerts
-    dir1.value = False
+    dir1.value = True
     pwm1.duty_cycle = int(speed/100*65535) # 16-bit: 0–65535
 
 def keineAhnungDigga():
