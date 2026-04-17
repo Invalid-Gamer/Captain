@@ -63,7 +63,6 @@ def handle_incoming_udp(sock):
     return None
 
 def udpHandler():
-    if active_tcp_connection:
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
