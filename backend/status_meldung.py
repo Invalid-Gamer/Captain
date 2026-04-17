@@ -3,7 +3,7 @@ import schedule
 import time
 
 def status_meldung_thread(adc, gps):
-    schedule.every(2).minutes.do(status(adc,gps))
+    schedule.every(2).minutes.do(status,adc,gps)
 
     while True:
         schedule.run_pending()
