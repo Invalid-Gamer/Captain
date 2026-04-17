@@ -28,7 +28,7 @@ def stop():
     pwm2.duty_cycle = 0
 
 def links(speed: float) -> None:
-    dir1 = digitalio.DigitalInOut(globals.DIR2)
+    dir1 = digitalio.DigitalInOut(globals.DIR1)
     dir1.direction = digitalio.Direction.OUTPUT
 
     pwm1 = pwmio.PWMOut(globals.PWM1, frequency=1000, duty_cycle=0)
@@ -38,7 +38,7 @@ def links(speed: float) -> None:
     pwm1.duty_cycle = int(speed/100*65535) # 16-bit: 0–65535
 
 def rechts(speed: float):
-    dir1 = digitalio.DigitalInOut(globals.DIR2)
+    dir1 = digitalio.DigitalInOut(globals.DIR1)
     dir1.direction = digitalio.Direction.OUTPUT
 
     pwm1 = pwmio.PWMOut(globals.PWM1, frequency=1000, duty_cycle=0)
