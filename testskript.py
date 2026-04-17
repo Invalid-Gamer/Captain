@@ -3,7 +3,7 @@ import struct
 import time
 import digitalio
 import pwmio
-import pins  # Deine Pin-Definitionen (DIR2, PWM2, etc.)
+import globals  # Deine Pin-Definitionen (DIR2, PWM2, etc.)
 
 # --- KONFIGURATION ---
 UDP_PORT = 9005
@@ -16,13 +16,13 @@ MAX_ADC = 4095  # Maximalwert des ESP32 Joysticks (12-Bit)
 print("[SYSTEM] Initialisiere Hardware...")
 try:
     # Motor 2 (Fahrmotor)
-    motor_dir = digitalio.DigitalInOut(pins.DIR2)
+    motor_dir = digitalio.DigitalInOut(globals.DIR2)
     motor_dir.direction = digitalio.Direction.OUTPUT
-    servo_dir = digitalio.DigitalInOut(pins.DIR1)
+    servo_dir = digitalio.DigitalInOut(globals.DIR1)
     servo_dir.direction = digitalio.Direction.OUTPUT
     # Frequenz 1000Hz ist gut für die meisten Motortreiber
-    motor_pwm = pwmio.PWMOut(pins.PWM2, frequency=1000, duty_cycle=0)
-    servo_pwm = pwmio.PWMOut(pins.PWM1, frequency=1000, duty_cycle=0)
+    motor_pwm = pwmio.PWMOut(globals.PWM2, frequency=1000, duty_cycle=0)
+    servo_pwm = pwmio.PWMOut(globals.PWM1, frequency=1000, duty_cycle=0)
 
     print("[SYSTEM] Motor-Hardware bereit.")
 except Exception as e:

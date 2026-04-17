@@ -8,3 +8,6 @@ PWM2 = board.D19
 SPICLK = board.SCK
 SPIMOSI = board.MOSI
 SPIMISO = board.MISO
+
+# Globale Variablen
+current_mode = 0

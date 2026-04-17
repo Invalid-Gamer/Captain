@@ -4,7 +4,7 @@ import logging
 import serial
 
 class pyGPS:
-    def __init__(self, port="/dev/ttyACM3", baud=9600):
+    def __init__(self, port="/dev/ttyACM0", baud=9600):
         try:
             self.ser = serial.Serial(port=port, baudrate=baud)
         except serial.serialutil.SerialException:

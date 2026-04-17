@@ -2,8 +2,11 @@ import logging
 import socket
 import struct
 import random
+import threading
 
 from communication.inputHandler import inputHandler
+from comps.motors.motors import keineAhnungDigga, stop
+import globals
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -60,57 +63,67 @@ def handle_incoming_udp(sock):
     return None
 
 def udpHandler():
-    if active_tcp_connection:
+        t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
-        while True:
+        logging.debug(getattr(t, "do_run", True))
+        while getattr(t, "do_run", True):
             try:
                 data, addr = sock.recvfrom(1024)
-                if len(data) <= 5:
+                if len(data) >= 5:
                     x, y, mode = struct.unpack('<HHB', data[:5])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     latest_udp_data_mode = mode
-                    inputHandler(latest_udp_data_y)
+                    inputHandler(latest_udp_data_x, latest_udp_data_y)
             except: pass
 
 def connHandler(adc):
-    global active_tcp_connection, latest_tcp_msg, currentMode
+    t1 = threading.Thread(target=udpHandler)
+    global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     tcp_sock.bind(("0.0.0.0", TCP_PORT))
     tcp_sock.listen(1)
     tcp_sock.setblocking(False)
-    currentMode = 0
     active_tcp_connection = None
 
-    udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    udp_sock.bind(("0.0.0.0", UDP_PORT))
-    udp_sock.settimeout(0.01)
-
     while True:
-        conn, addr = tcp_sock.accept()
-        active_tcp_connection = conn
         try:
-            while True:
-                if active_tcp_connection is None:
-                    try:
-                        conn, addr = tcp_sock.accept()
-                        active_tcp_connection = conn
-                        active_tcp_connection.setblocking(False)
-                    except BlockingIOError:
-                        pass
-                else:
-                    try:
-                        data = active_tcp_connection.recv(1024)
-                        if not data:
-                            active_tcp_connection.close()
-                            active_tcp_connection = None
-                        else:
-                            msg = data.decode('utf-8', errors='ignore').strip()
-                            logging.debug(msg)
-                    except BlockingIOError:
-                        pass
-                    except Exception:
-                        active_tcp_connection = None
+            try:
+                conn, addr = tcp_sock.accept()
+                active_tcp_connection = conn
+                active_tcp_connection.setblocking(False)
+                logging.info(f"Verbunden mit {addr}")
+            except BlockingIOError:
+                import time
+                time.sleep(0.1)
+                continue
+            while active_tcp_connection:
+                try:
+                    data = active_tcp_connection.recv(1024)
+                    if not data:
+                        break
+                    msg = data.decode('utf-8', errors='ignore').strip()
+                    key, value = msg.split(':')
+                    if key == "mode":
+                        globals.current_mode = value
+                        logging.debug(f"Current Mode: {globals.current_mode}")
+                    else:
+                        logging.debug(f"Command nicht gefunden: {key}:{value}")
+                    logging.debug(msg)
+                except BlockingIOError:
+                    time.sleep(0.01)
+                except Exception as e:
+                    logging.error(f"Fehler beim Empfangen: {e}")
+                    break
 
+            logging.info("Client getrennt, räume auf...")
+            if active_tcp_connection:
+                active_tcp_connection.close()
+            active_tcp_connection = None
+            stop()
+
+        except Exception as e:
+            logging.error(f"Kritischer Fehler: {e}")
+            time.sleep(1)

@@ -5,7 +5,7 @@ from comps.sensors import ADC, Batterie_Prozent
 from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
 from backend import logs, status_meldung
-
+import globals
 
 def main():
     logs.log_handler()
