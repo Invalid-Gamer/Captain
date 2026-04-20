@@ -14,7 +14,7 @@ def main():
     adc = ADC.ADC()
     gps = pyGPS.pyGPS()
 
-    logging.info("Startet 5min Status Meldung ...")
+    logging.info("Startet 2min Status Meldung ...")
     status_meldung_thread = threading.Thread(target=status_meldung.status_meldung_thread,args=(adc,gps,),daemon=True)
     status_meldung_thread.start()
 

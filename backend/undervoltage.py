@@ -4,6 +4,7 @@ import time
 
 
 def throttled():
+    #checkt alle 10 Sekunden, ob dem RasPi Spannung fehlt und gibt dieses aus
     while True:
         out = subprocess.check_output(
             ["vcgencmd", "get_throttled"]
