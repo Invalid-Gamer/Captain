@@ -4,16 +4,17 @@ import time
 
 
 def throttled():
-    out = subprocess.check_output(
-        ["vcgencmd", "get_throttled"]
-    ).decode()
+    while True:
+        out = subprocess.check_output(
+            ["vcgencmd", "get_throttled"]
+        ).decode()
 
-    value = int(out.split("=")[1],16)
+        value = int(out.split("=")[1],16)
 
-    if value & 0x1:
-        logging.warning("Main Bus B Under Voltage!")
+        if value & 0x1:
+            logging.warning("Main Bus B Under Voltage!")
 
-    if value & 0x10000:
-        logging.warning("Main Bus B normal")
+        if value & 0x10000:
+            logging.warning("Main Bus B normal")
 
-    time.sleep(10)
+        time.sleep(10)
