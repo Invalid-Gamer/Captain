@@ -13,9 +13,9 @@ def throttled():
         value = int(out.split("=")[1],16)
 
         if value & 0x1:
-            logging.warning("Main Bus B Under Voltage!")
+            logging.warning("Main B Bus Undervolt !")
 
         if value & 0x10000:
-            logging.warning("Main Bus B normal")
+            logging.warning("Main B Bus normal")
 
         time.sleep(10)
