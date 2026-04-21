@@ -2,8 +2,8 @@ import board
 CSPin = board.D26
 DIR1 = board.D18
 DIR2 = board.D23
-PWM1 = board.D12
-PWM2 = board.D19
+PWM1 = board.D13
+PWM2 = board.D12
 
 SPICLK = board.SCK
 SPIMOSI = board.MOSI
