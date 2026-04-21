@@ -4,7 +4,7 @@ import threading
 from comps.sensors import ADC, Batterie_Prozent
 from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
-from backend import logs, status_meldung
+from backend import logs, status_meldung, undervoltage
 import globals
 
 def main():
@@ -14,9 +14,12 @@ def main():
     adc = ADC.ADC()
     gps = pyGPS.pyGPS()
 
-    logging.info("Startet 5min Status Meldung ...")
+    logging.info("Startet 2min Status Meldung ...")
     status_meldung_thread = threading.Thread(target=status_meldung.status_meldung_thread,args=(adc,gps,),daemon=True)
     status_meldung_thread.start()
+
+    undervolt = threading.Thread(target=undervoltage.throttled)
+    undervolt.start()
 
     t1 = threading.Thread(target=comms.connHandler, args=(adc,))
     t1.start()
