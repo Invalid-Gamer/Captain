@@ -102,3 +102,14 @@ class ADC:
         except Exception as e:
             logging.error(f"LeseError: {e}")
             raise
+
+    def get_lenkunng(self, channel) -> float:
+        try:
+            voltage = self.get_chan_voltage(channel)
+            if voltage <= 0.10:
+                return -100
+            if voltage >= 4.0:
+                return 100
+
+        except KeyError:
+            raise ValueError("Ungültiger ADC Channel?")
