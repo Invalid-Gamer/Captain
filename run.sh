@@ -29,6 +29,13 @@ case "$NAME" in
     SCRIPT="$PROJECT_DIR/main.py"
     ;;
 
+  "guidance")
+    PROJECT_DIR="development/Guidance"
+    VENV="venv"
+    SCRIPT="$PROJECT_DIR/main.py"
+    ;;
+
+
   *)
     echo "Unbekanntes Projekt: $NAME"
     echo "Verfügbare: main, piet, noora, webinterface"
