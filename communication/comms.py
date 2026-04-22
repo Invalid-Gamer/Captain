@@ -107,7 +107,7 @@ def connHandler(adc):
                     msg = data.decode('utf-8', errors='ignore').strip()
                     key, value = msg.split(':')
                     if key == "mode":
-                        globals.current_mode = value
+                        globals.current_mode = int(value)
                         logging.debug(f"Current Mode: {globals.current_mode}")
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")

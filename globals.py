@@ -10,4 +10,4 @@ SPIMOSI = board.MOSI
 SPIMISO = board.MISO
 
 # Globale Variablen
-current_mode = 0
+current_mode: int = 0
