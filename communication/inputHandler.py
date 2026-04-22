@@ -8,7 +8,7 @@ DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
 def inputHandler(x,y):
         motors = Motors()
-        if globals.current_mode == "1" or globals.current_mode == "2":
+        if globals.current_mode == 1 or globals.current_mode == 2:
             if y > DEADZONE_POS:
                 speed = ((y - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
                 speed = max(0.0, min(100.0, speed))
