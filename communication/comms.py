@@ -125,9 +125,12 @@ def connHandler(adc, motors):
                     time.sleep(0.01)
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
-                    break
-                if(t2.is_alive() == False):
-                    t2.start()
+
+                try:
+                    if(t2.is_alive() == False):
+                        t2.start()
+                except Exception as e:
+                    logging.error(f"Fehler beim Empfangen: {e}")
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
