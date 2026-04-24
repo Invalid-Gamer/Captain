@@ -5,8 +5,8 @@ import random
 import threading
 
 from communication.inputHandler import inputHandler
-from comps.motors.motors import keineAhnungDigga, stop
 import globals
+from comps.motors.motors import Motors
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -62,7 +62,7 @@ def handle_incoming_udp(sock):
         pass
     return None
 
-def udpHandler():
+def udpHandler(motors):
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
@@ -75,10 +75,10 @@ def udpHandler():
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     latest_udp_data_mode = mode
-                    inputHandler(latest_udp_data_x, latest_udp_data_y)
+                    inputHandler(latest_udp_data_x, latest_udp_data_y, motors)
             except: pass
 
-def connHandler(adc):
+def connHandler(adc, motors):
     t1 = threading.Thread(target=udpHandler)
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +122,8 @@ def connHandler(adc):
             if active_tcp_connection:
                 active_tcp_connection.close()
             active_tcp_connection = None
-            stop()
+            motors.stop()
+            motors.stoplenkung()
 
         except Exception as e:
             logging.error(f"Kritischer Fehler: {e}")
