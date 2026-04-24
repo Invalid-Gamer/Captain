@@ -6,7 +6,7 @@ import threading
 
 from communication.inputHandler import inputHandler
 import globals
-from comps.motors import motors
+from comps.motors.motors import Motors
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -122,6 +122,7 @@ def connHandler(adc):
             if active_tcp_connection:
                 active_tcp_connection.close()
             active_tcp_connection = None
+            motors = Motors()
             motors.stop()
 
         except Exception as e:
