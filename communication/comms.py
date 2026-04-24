@@ -123,6 +123,7 @@ def connHandler(adc, motors):
                 active_tcp_connection.close()
             active_tcp_connection = None
             motors.stop()
+            motors.stoplenkung()
 
         except Exception as e:
             logging.error(f"Kritischer Fehler: {e}")
