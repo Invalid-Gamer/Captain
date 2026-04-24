@@ -62,6 +62,10 @@ def handle_incoming_udp(sock):
         pass
     return None
 
+def tcpHandler(adc):
+    currentVoltage = adc.get_12voltage()
+    sendRealValues(currentVoltage,0)
+
 def udpHandler(motors):
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -112,6 +116,7 @@ def connHandler(adc, motors):
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
+                    tcpHandler(adc)
                 except BlockingIOError:
                     time.sleep(0.01)
                 except Exception as e:
