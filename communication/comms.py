@@ -117,12 +117,12 @@ def connHandler(adc, motors):
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
-                    tcpHandler(adc)
                 except BlockingIOError:
                     time.sleep(0.01)
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
                     break
+                tcpHandler(adc)
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
