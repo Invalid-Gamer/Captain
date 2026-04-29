@@ -5,6 +5,8 @@ VELOCITY = 50
 LENKUNG = 75
 DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
+MittelCordsRechts = 1.36
+MittelCordsLinks = 1.38
 def inputHandler(x,y, motors, adc):
     currentLenkung = adc.get_lenkung(2)
     if globals.current_mode == 1 or globals.current_mode == 2:
@@ -29,13 +31,23 @@ def inputHandler(x,y, motors, adc):
             motors.links(speed)
         else:
             if globals.current_mode == 1:
-                if currentLenkung <= 1.38 and currentLenkung >= 1.36:
+                if currentLenkung <= MittelCordsLinks and currentLenkung >= MittelCordsRechts:
                         motors.stoplenkung()
-                elif currentLenkung < 1.36:
-                    speed = LENKUNG * 0.55
+                elif currentLenkung < MittelCordsRechts:
+                    if currentLenkung < 1:
+                        speed = LENKUNG * 0.7
+                    elif currentLenkung < 1.2:
+                        speed = LENKUNG * 0.60
+                    else:
+                        speed = LENKUNG * 0.50
                     motors.links(speed)
-                elif currentLenkung > 1.38:
-                    speed = LENKUNG * 0.55
+                elif currentLenkung > MittelCordsLinks:
+                    if currentLenkung > 1.70:
+                        speed = LENKUNG * 0.7
+                    elif currentLenkung > 1.5:
+                        speed = LENKUNG * 0.60
+                    else:
+                        speed = LENKUNG * 0.50
                     motors.rechts(speed)
             else:
                 motors.stoplenkung()
