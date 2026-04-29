@@ -28,10 +28,10 @@ def inputHandler(x,y, motors, adc):
             speed = max(0.0, min(100.0, speed))
             motors.links(speed)
         else:
-            if currentLenkung < -5.0:
+            if currentLenkung < 0.0:
                 speed = LENKUNG * 0.5
                 motors.links(speed)
-            elif currentLenkung > 5.0:
+            elif currentLenkung > 0.0:
                 speed = LENKUNG * 0.5
                 motors.rechts(speed)
             else:
