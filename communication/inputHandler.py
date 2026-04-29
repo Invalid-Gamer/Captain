@@ -35,8 +35,8 @@ def inputHandler(x,y, motors, adc):
                 if currentLenkung > 1.5:
                     speed = LENKUNG * 0.6
                     motors.rechts(speed)
-                if currentLenkung <= 1.4:
-                    if currentLenkung >= 1.5:
+                if currentLenkung >= 1.5:
+                    if currentLenkung <= 1.4:
                         motors.stoplenkung()
             else:
                 motors.stoplenkung()
