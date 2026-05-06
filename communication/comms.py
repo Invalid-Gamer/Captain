@@ -78,16 +78,22 @@ def udpHandler(adc, motors):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
         logging.debug(getattr(t, "do_run", True))
+        latest_udp_msg = time.time()
         while getattr(t, "do_run", True):
             try:
                 data, addr = sock.recvfrom(1024)
                 if len(data) >= 5:
+                    latest_udp_msg = time.time()
                     x, y, mode = struct.unpack('<HHB', data[:5])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     latest_udp_data_mode = mode
                     inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc)
-            except: pass
+            except:
+                pass
+            if (latest_udp_msg < time.time() - 1):
+                motors.stop()
+                motors.stoplenkung()
 
 def connHandler(adc, motors):
     t1 = threading.Thread(target=udpHandler)
