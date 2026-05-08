@@ -82,7 +82,7 @@ def udpHandler(adc, motors):
         while getattr(t, "do_run", True):
             try:
                 data, addr = sock.recvfrom(1024)
-                if len(data) >= 5:
+                if len(data) >= 4:
                     latest_udp_msg = time.time()
                     x, y = struct.unpack('<HH', data[:4])
                     latest_udp_data_x = x
