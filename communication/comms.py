@@ -84,10 +84,9 @@ def udpHandler(adc, motors):
                 data, addr = sock.recvfrom(1024)
                 if len(data) >= 5:
                     latest_udp_msg = time.time()
-                    x, y, mode = struct.unpack('<HHB', data[:5])
+                    x, y = struct.unpack('<HH', data[:4])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
-                    latest_udp_data_mode = mode
                     inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc)
             except:
                 pass
@@ -138,7 +137,7 @@ def connHandler(adc, motors):
                     if(t2.is_alive() == False):
                         t2.start()
                 except Exception as e:
-                    logging.error(f"Fehler beim Empfangen: {e}")
+                    logging.error(f"Fehler beim starten von t2: {e}")
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
