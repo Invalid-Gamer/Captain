@@ -87,7 +87,6 @@ def udpHandler(adc, motors):
                     x, y = struct.unpack('<HH', data[:4])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
-                    logging.debug(f"Latest udp data received: \n X: {latest_udp_data_x} \n Y: {latest_udp_data_y}")
                     inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc)
             except:
                 pass
