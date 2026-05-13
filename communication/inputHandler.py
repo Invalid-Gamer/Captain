@@ -26,11 +26,15 @@ def inputHandler(x,y, motors, adc):
                 speed = ((x - DEADZONE_POS) / (4095 - DEADZONE_POS)) * LENKUNG
                 speed = max(0.0, min(100.0, speed))
                 motors.rechts(speed)
+            else:
+                motors.stoplenkung()
         elif x < DEADZONE_NEG:
             if currentLenkung != 2.49:
                 speed = ((DEADZONE_NEG - x) / DEADZONE_NEG) * LENKUNG
                 speed = max(0.0, min(100.0, speed))
                 motors.links(speed)
+            else:
+                motors.stoplenkung()
         else:
             if globals.current_mode == 1:
                 if currentLenkung <= MittelCordsLinks and currentLenkung >= MittelCordsRechts:
