@@ -36,7 +36,7 @@ def inputHandler(x,y, motors, adc):
                 elif currentLenkung < MittelCordsRechts:
                     if currentLenkung < 0.30:
                         speed = 100
-                    elif currentLenkung < 1.2:
+                    elif currentLenkung < 1.18:
                         speed = LENKUNG * 0.9
                     else:
                         speed = LENKUNG * 0.50
