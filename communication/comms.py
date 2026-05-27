@@ -120,7 +120,7 @@ def connHandler(adc, motors):
             while active_tcp_connection:
                 try:
                     readable, _, exceptional = select.select(
-                        [active_tcp_connection], [], [active_tcp_connection], timeout=2.0
+                        [active_tcp_connection], [], [active_tcp_connection], 2.0
                     )
 
                     if exceptional:
