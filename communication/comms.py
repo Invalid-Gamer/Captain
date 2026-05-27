@@ -4,6 +4,7 @@ import struct
 import random
 import threading
 import time
+import select
 
 from communication.inputHandler import inputHandler
 import globals
