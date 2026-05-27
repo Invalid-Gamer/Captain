@@ -111,6 +111,10 @@ def connHandler(adc, motors):
             try:
                 conn, addr = tcp_sock.accept()
                 active_tcp_connection = conn
+                conn.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 2)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
                 logging.info(f"Verbunden mit {addr}")
             except socket.timeout:
                 continue
@@ -118,7 +122,7 @@ def connHandler(adc, motors):
             while active_tcp_connection:
                 try:
                     readable, _, exceptional = select.select(
-                        [active_tcp_connection], [], [active_tcp_connection], 2.0
+                        [active_tcp_connection], [], [active_tcp_connection], 0.5
                     )
 
                     if exceptional:
