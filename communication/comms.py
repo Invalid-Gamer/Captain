@@ -130,7 +130,6 @@ def connHandler(adc, motors):
                         break
 
                     if not readable:
-                        # Timeout – keine Daten, aber Verbindung noch offen → nächste Iteration
                         continue
 
                     data = active_tcp_connection.recv(1024)
