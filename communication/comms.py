@@ -97,26 +97,24 @@ def udpHandler(adc, motors):
 
 def connHandler(adc, motors):
     t1 = threading.Thread(target=udpHandler)
-    t2 = threading.Thread(target=tcpHandler, args=(adc,))
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     tcp_sock.bind(("0.0.0.0", TCP_PORT))
     tcp_sock.listen(1)
-    tcp_sock.setblocking(False)
     tcp_sock.settimeout(1)
     active_tcp_connection = None
 
     while True:
         try:
+            t2 = threading.Thread(target=tcpHandler, args=(adc,))
             try:
                 conn, addr = tcp_sock.accept()
                 active_tcp_connection = conn
-                active_tcp_connection.setblocking(False)
                 logging.info(f"Verbunden mit {addr}")
-            except BlockingIOError:
-                time.sleep(0.1)
+            except socket.timeout:
                 continue
+
             while active_tcp_connection:
                 try:
                     readable, _, exceptional = select.select(
@@ -133,6 +131,7 @@ def connHandler(adc, motors):
 
                     data = active_tcp_connection.recv(1024)
                     if not data:
+                        logging.info("Client Verbindung sauber getrennt.")
                         break
                     msg = data.decode('utf-8', errors='ignore').strip()
                     key, value = msg.split(':')
@@ -142,23 +141,23 @@ def connHandler(adc, motors):
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
-                except BlockingIOError:
-                    time.sleep(0.01)
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
 
-                try:
-                    if(t2.is_alive() == False):
-                        t2.start()
-                except Exception as e:
-                    logging.error(f"Fehler beim starten von t2: {e}")
 
+                if not (t2.is_alive()):
+                    t2.start()
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
                 active_tcp_connection.close()
             active_tcp_connection = None
-            t2.join()
+            if t2.is_alive():
+                t2.do_run = False
+                t2.join(timeout=5)
+                if t2.is_alive():
+                    logging.warning("t2 konnte nicht auber beendet werden.")
+
             motors.stop()
             motors.stoplenkung()
 
