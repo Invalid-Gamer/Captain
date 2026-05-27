@@ -143,7 +143,7 @@ def connHandler(adc, motors):
             if active_tcp_connection:
                 active_tcp_connection.close()
             active_tcp_connection = None
-            t2.do_run = False
+            t2.join()
             motors.stop()
             motors.stoplenkung()
 
