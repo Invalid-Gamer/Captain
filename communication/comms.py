@@ -145,12 +145,15 @@ def connHandler(adc, motors):
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
+
+                    if not (t2.is_alive()):
+                        t2.start()
+
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
+                    break
 
 
-                if not (t2.is_alive()):
-                    t2.start()
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
