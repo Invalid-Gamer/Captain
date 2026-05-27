@@ -103,6 +103,7 @@ def connHandler(adc, motors):
     tcp_sock.bind(("0.0.0.0", TCP_PORT))
     tcp_sock.listen(1)
     tcp_sock.setblocking(False)
+    tcp_sock.settimeout(1)
     active_tcp_connection = None
 
     while True:
@@ -117,6 +118,18 @@ def connHandler(adc, motors):
                 continue
             while active_tcp_connection:
                 try:
+                    readable, _, exceptional = select.select(
+                        [active_tcp_connection], [], [active_tcp_connection], timeout=2.0
+                    )
+
+                    if exceptional:
+                        logging.warning("Verbindung fehlerhaft, trenne...")
+                        break
+
+                    if not readable:
+                        # Timeout – keine Daten, aber Verbindung noch offen → nächste Iteration
+                        continue
+
                     data = active_tcp_connection.recv(1024)
                     if not data:
                         break
@@ -138,6 +151,7 @@ def connHandler(adc, motors):
                         t2.start()
                 except Exception as e:
                     logging.error(f"Fehler beim starten von t2: {e}")
+
 
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
