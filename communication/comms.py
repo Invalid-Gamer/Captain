@@ -48,11 +48,13 @@ def sendSimulatedValues(conn):
     s2 = sendTCP(conn, "VEL", vel)
     return s1 and s2
 
-def sendRealValues(batt, lenk):
+def sendRealValues(batt, lenk, ampere):
     batt = "BATT:" + batt
     lenk = "LENK:" + lenk
+    ampere = "AMPR:" + ampere
     sendTCP(active_tcp_connection, "SDATA", batt)
     sendTCP(active_tcp_connection, "SDATA", lenk)
+    sendTCP(active_tcp_connection, "SDATA", ampere)
 
 def handle_incoming_udp(sock):
     global latest_udp_data
@@ -71,9 +73,11 @@ def tcpHandler(adc):
     while getattr(t, "do_run", True):
         currentVoltage = adc.get_12voltage(1)
         currentLenkung = adc.get_lenkung(2)
+        currentAmpere = adc.get_ampere(0)
         logging.debug(f"Sending Voltage: {currentVoltage}")
         logging.debug(f"Sending Lenkung: {currentLenkung}")
-        sendRealValues(currentVoltage,currentLenkung)
+        logging.debug(f"Sending Ampere: {currentAmpere}")
+        sendRealValues(currentVoltage,currentLenkung, currentAmpere)
         time.sleep(1)
 
 def udpHandler(adc, motors):
