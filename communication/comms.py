@@ -49,8 +49,10 @@ def sendSimulatedValues(conn):
     return s1 and s2
 
 def sendRealValues(batt, lenk):
-    sendTCP(active_tcp_connection, "BATT", batt)
-    sendTCP(active_tcp_connection, "LENK", lenk)
+    batt = "BATT:" + batt
+    lenk = "LENK:" + lenk
+    sendTCP(active_tcp_connection, "SDATA", batt)
+    sendTCP(active_tcp_connection, "SDATA", lenk)
 
 def handle_incoming_udp(sock):
     global latest_udp_data
@@ -78,6 +80,7 @@ def udpHandler(adc, motors):
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
+        sock.settimeout(0.2)
         logging.debug(getattr(t, "do_run", True))
         latest_udp_msg = time.time()
         while getattr(t, "do_run", True):
@@ -89,8 +92,11 @@ def udpHandler(adc, motors):
                     latest_udp_data_x = x
                     latest_udp_data_y = y
                     inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc)
-            except:
+            except socket.timeout:
                 pass
+            except Exception as e:
+                logging.error(f"UDP Fehler: {e}")
+            
             if (latest_udp_msg < time.time() - 1):
                 motors.stop()
                 motors.stoplenkung()
