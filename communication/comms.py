@@ -149,7 +149,7 @@ def connHandler(adc, motors):
                         logging.debug(f"Current Mode: {globals.current_mode}")
                     elif key == "conf":
                         logging.debug(f"Config Value: {value}")
-                        logging.warning(f"Config Section not configured, doing nothing!\nConfig Value: {value}")
+                        logging.warning(f"Config Section not developed, doing nothing!\nConfig Value: {value}")
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
