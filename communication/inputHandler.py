@@ -22,54 +22,40 @@ def inputHandler(x,y, motors, adc):
             motors.stop()
 
         if x > DEADZONE_POS:
-            if globals.current_mode == 1:
-                if currentLenkung != 0.00:
-                    speed = ((x - DEADZONE_POS) / (4095 - DEADZONE_POS)) * LENKUNG
-                    speed = max(0.0, min(100.0, speed))
-                    motors.rechts(speed)
-                else:
-                    motors.stoplenkung()
-            else:
+            if currentLenkung != 0.00:
                 speed = ((x - DEADZONE_POS) / (4095 - DEADZONE_POS)) * LENKUNG
                 speed = max(0.0, min(100.0, speed))
                 motors.rechts(speed)
+            else:
+                motors.stoplenkung()
         elif x < DEADZONE_NEG:
-            if globals.current_mode == 1:
-                if currentLenkung > 2.48:
-                    motors.stoplenkung()
-                else:
-                    speed = ((DEADZONE_NEG - x) / DEADZONE_NEG) * LENKUNG
-                    speed = max(0.0, min(100.0, speed))
-                    motors.links(speed)
+            if currentLenkung > 2.48:
+                motors.stoplenkung()
             else:
                 speed = ((DEADZONE_NEG - x) / DEADZONE_NEG) * LENKUNG
                 speed = max(0.0, min(100.0, speed))
                 motors.links(speed)
         else:
-            if globals.current_mode == 1:
-                if currentLenkung <= MittelCordsLinks and currentLenkung >= MittelCordsRechts:
-                        motors.stoplenkung()
-                elif currentLenkung < MittelCordsRechts:
-                    if currentLenkung < 0.30:
-                        speed = 100
-                    elif currentLenkung < 1.18:
-                        speed = LENKUNG * 0.9
-                    else:
-                        speed = LENKUNG * 0.50
-                    motors.links(speed)
-                elif currentLenkung > MittelCordsLinks:
-                    if currentLenkung > 2:
-                        speed = 100
-                    elif currentLenkung > 1.70:
-                        speed = LENKUNG * 0.9
-                    elif currentLenkung > 1.5:
-                        speed = LENKUNG * 0.60
-                    else:
-                        speed = LENKUNG * 0.50
-                    motors.rechts(speed)
-            else:
-                motors.stoplenkung()
-
+            if currentLenkung <= MittelCordsLinks and currentLenkung >= MittelCordsRechts:
+                   motors.stoplenkung()
+            elif currentLenkung < MittelCordsRechts:
+                if currentLenkung < 0.30:
+                    speed = 100
+                elif currentLenkung < 1.18:
+                    speed = LENKUNG * 0.9
+                else:
+                    speed = LENKUNG * 0.50
+                motors.links(speed)
+            elif currentLenkung > MittelCordsLinks:
+                if currentLenkung > 2:
+                    speed = 100
+                elif currentLenkung > 1.70:
+                    speed = LENKUNG * 0.9
+                elif currentLenkung > 1.5:
+                    speed = LENKUNG * 0.60
+                else:
+                    speed = LENKUNG * 0.50
+                motors.rechts(speed)
     else:
         motors.stop()
         motors.stoplenkung()
