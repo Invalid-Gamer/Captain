@@ -96,8 +96,8 @@ def udpHandler(adc, motors):
                 pass
             except Exception as e:
                 logging.error(f"UDP Fehler: {e}")
-            
-            if (latest_udp_msg < time.time() - 1):
+
+            if latest_udp_msg < time.time() - 1:
                 motors.stop()
                 motors.stoplenkung()
 
@@ -147,6 +147,9 @@ def connHandler(adc, motors):
                     if key == "mode":
                         globals.current_mode = int(value)
                         logging.debug(f"Current Mode: {globals.current_mode}")
+                    elif key == "conf":
+                        logging.debug(f"Config Value: {value}")
+                        logging.warning(f"Config Section not configured, doing nothing!\nConfig Value: {value}")
                     else:
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
