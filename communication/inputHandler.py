@@ -7,7 +7,7 @@ DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
 MittelCordsRechts = 1.34
 MittelCordsLinks = 1.4
-def inputHandler(x,y, motors, adc):
+def inputHandler(x,y, motors, adc): # Verarbeitet rohe Joystick eingaben
     currentLenkung = adc.get_lenkung(2)
     if globals.current_mode == 1 or globals.current_mode == 2:
         if y > DEADZONE_POS:
@@ -61,7 +61,7 @@ def inputHandler(x,y, motors, adc):
         motors.stoplenkung()
         logging.debug(f"Mache nix weil current_mode: {globals.current_mode}")
 
-def msgHanlder(msg):
+def msgHanlder(msg): # Deprecated
     if ":" in msg:
         key, value = msg.split(":")
         if key == "mode":
