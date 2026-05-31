@@ -8,27 +8,26 @@ import select
 
 from communication.inputHandler import inputHandler
 import globals
-from comps.motors.motors import Motors
 
 latest_tcp_msg = ""
 active_tcp_connection = None
 TCP_PORT = 9006
 UDP_PORT = 9005
 
-def parseUDPData(data):
+def parseUDPData(data): # UDP Daten entpacken
     if len(data) >= 5:
         return struct.unpack('<HHB', data[:5])
     return None
 
 
-def DecodeTCP(data):
+def DecodeTCP(data): # Deprecated
     try:
         return data.decode('utf-8').strip()
     except UnicodeDecodeError:
         return None
 
 
-def sendTCP(conn, key, value):
+def sendTCP(conn, key, value): # rohe Sendefunktion für TCP
     if conn:
         try:
             msg = f"{key}:{value}\n"
@@ -40,7 +39,7 @@ def sendTCP(conn, key, value):
     return False
 
 
-def sendSimulatedValues(conn):
+def sendSimulatedValues(conn): #Deprecated
     batt = round(random.uniform(3.3, 4.2), 2)
     vel = random.randint(0, 100)
 
@@ -48,15 +47,19 @@ def sendSimulatedValues(conn):
     s2 = sendTCP(conn, "VEL", vel)
     return s1 and s2
 
-def sendRealValues(batt, lenk, ampere):
+def sendRealValues(batt, lenk, ampere, absv, absh): # Sende Sensordaten über TCP
     batt = "BATT:" + batt
     lenk = "LENK:" + lenk
     ampere = "AMPR:" + ampere
+    absv = "ABSV:" + absv
+    absh = "ABSH:" + absh
     sendTCP(active_tcp_connection, "SDATA", batt)
     sendTCP(active_tcp_connection, "SDATA", lenk)
     sendTCP(active_tcp_connection, "SDATA", ampere)
+    sendTCP(active_tcp_connection, "SDATA", absv)
+    sendTCP(active_tcp_connection, "SDATA", absh)
 
-def handle_incoming_udp(sock):
+def handle_incoming_udp(sock): # UDP Empfangen und verpacken
     global latest_udp_data
     try:
         data, addr = sock.recvfrom(1024)
@@ -68,19 +71,23 @@ def handle_incoming_udp(sock):
         pass
     return None
 
-def tcpHandler(adc):
+def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
     t = threading.current_thread()
     while getattr(t, "do_run", True):
         currentVoltage = adc.get_12voltage(1)
         currentLenkung = adc.get_lenkung(2)
         currentAmpere = adc.get_ampere(0)
+        currentAbsV = tof.get_mm_vorne()
+        currentAbsH = tof.get_mm_hinten()
         logging.debug(f"Sending Voltage: {currentVoltage}")
         logging.debug(f"Sending Lenkung: {currentLenkung}")
         logging.debug(f"Sending Ampere: {currentAmpere}")
-        sendRealValues(currentVoltage,currentLenkung, currentAmpere)
+        logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
+        logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
+        sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
         time.sleep(1)
 
-def udpHandler(adc, motors):
+def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
@@ -105,7 +112,7 @@ def udpHandler(adc, motors):
                 motors.stop()
                 motors.stoplenkung()
 
-def connHandler(adc, motors):
+def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
     t1 = threading.Thread(target=udpHandler)
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,8 +124,8 @@ def connHandler(adc, motors):
 
     while True:
         try:
-            t2 = threading.Thread(target=tcpHandler, args=(adc,))
-            try:
+            t2 = threading.Thread(target=tcpHandler, args=(adc,tof,))
+            try: # Verbindung aufbauen und Timeouts festlegen
                 conn, addr = tcp_sock.accept()
                 active_tcp_connection = conn
                 conn.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -130,7 +137,7 @@ def connHandler(adc, motors):
                 continue
 
             while active_tcp_connection:
-                try:
+                try: # Überprüfen ob die Verbindung noch steht
                     readable, _, exceptional = select.select(
                         [active_tcp_connection], [], [active_tcp_connection], 0.5
                     )
@@ -142,7 +149,7 @@ def connHandler(adc, motors):
                     if not readable:
                         continue
 
-                    data = active_tcp_connection.recv(1024)
+                    data = active_tcp_connection.recv(1024) # TCP von der Fernbedienung
                     if not data:
                         logging.info("Client Verbindung sauber getrennt.")
                         break
@@ -158,7 +165,7 @@ def connHandler(adc, motors):
                         logging.debug(f"Command nicht gefunden: {key}:{value}")
                     logging.debug(msg)
 
-                    if not (t2.is_alive()):
+                    if not (t2.is_alive()): # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
                         t2.start()
 
                 except Exception as e:
@@ -166,7 +173,7 @@ def connHandler(adc, motors):
                     break
 
 
-
+            # Ab hier ist die while Schleife vorbei
             logging.info("Client getrennt, räume auf...")
             if active_tcp_connection:
                 active_tcp_connection.close()
