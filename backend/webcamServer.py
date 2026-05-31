@@ -30,5 +30,5 @@ def video_feed():
 def webcamServer():
     t = threading.current_thread()
     logging.info(f"Webcam Server running on Port: {port}")
-    while getattr(t, "do_run", True):
+    if getattr(t, "do_run", True):
         app.run(host='0.0.0.0', port=port)

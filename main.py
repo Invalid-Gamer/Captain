@@ -34,8 +34,8 @@ def main():
     print(adc.get_ampere(0))
     print(adc.get_12voltage(1))
 
-    t3 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
-    t3.start()
+    t4 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
+    t4.start()
 
 if __name__ == '__main__':
     main()

@@ -21,12 +21,12 @@ def status(adc,gps,tof): # Statusmeldung Func
     logging.info("---Akkus---")
     logging.info(f"Akkustand: {adc.get_12voltage(1)}V {adc.get_ampere(0)}A")
     logging.info("---Sensoren---")
-    logging.info(f"Lenkung: {gps.get_lenkung(2)}")
+    logging.info(f"Lenkung: {adc.get_lenkung(2)}")
     logging.info(f"Abstand Vorne: {tof.get_mm_vorne()}, Abstand Hinten: {tof.get_mm_hinten()}")
     logging.info("---GPS---")
     try:
         logging.info(f"Posi: {gps.get_lat()} {gps.get_lon()}")
-        logging.info(f"Geschwindigkeit: {gps.get_speed_ms}")
+        logging.info(f"Geschwindigkeit: {gps.get_speed_ms()}")
     except:
         logging.info("GPS Modul nicht angeschlossen, überspringe GPS Daten")
     logging.info("Status Meldung Ende")

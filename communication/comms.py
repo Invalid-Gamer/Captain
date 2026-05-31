@@ -48,11 +48,11 @@ def sendSimulatedValues(conn): #Deprecated
     return s1 and s2
 
 def sendRealValues(batt, lenk, ampere, absv, absh): # Sende Sensordaten über TCP
-    batt = "BATT:" + batt
-    lenk = "LENK:" + lenk
-    ampere = "AMPR:" + ampere
-    absv = "ABSV:" + absv
-    absh = "ABSH:" + absh
+    batt = "BATT:" + str(batt)
+    lenk = "LENK:" + str(lenk)
+    ampere = "AMPR:" + str(ampere)
+    absv = "ABSV:" + str(absv)
+    absh = "ABSH:" + str(absh)
     sendTCP(active_tcp_connection, "SDATA", batt)
     sendTCP(active_tcp_connection, "SDATA", lenk)
     sendTCP(active_tcp_connection, "SDATA", ampere)
@@ -113,7 +113,7 @@ def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und 
                 motors.stoplenkung()
 
 def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
-    t1 = threading.Thread(target=udpHandler)
+    t1 = threading.Thread(target=udpHandler, args=(adc,motors,))
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -154,7 +154,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                         logging.info("Client Verbindung sauber getrennt.")
                         break
                     msg = data.decode('utf-8', errors='ignore').strip()
-                    key, value = msg.split(':')
+                    key, value = msg.split(':', 1)
                     if key == "mode":
                         globals.current_mode = int(value)
                         logging.debug(f"Current Mode: {globals.current_mode}")
