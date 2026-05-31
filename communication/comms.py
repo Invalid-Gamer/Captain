@@ -166,6 +166,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                     logging.debug(msg)
 
                     if not (t2.is_alive()): # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
+                        t2 = threading.Thread(target=tcpHandler, args=(adc, tof,))
                         t2.start()
 
                 except Exception as e:

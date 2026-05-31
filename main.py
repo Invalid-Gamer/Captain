@@ -21,7 +21,7 @@ def main():
     status_meldung_thread = threading.Thread(target=status_meldung.status_meldung_thread,args=(adc,gps,tof,),daemon=True)
     status_meldung_thread.start()
 
-    undervolt = threading.Thread(target=undervoltage.throttled)
+    undervolt = threading.Thread(target=undervoltage.throttled, daemon=True)
     undervolt.start()
 
     t1 = threading.Thread(target=comms.connHandler, args=(adc,motors,tof,))
@@ -30,9 +30,6 @@ def main():
     t2.start()
     t3 = threading.Thread(target=webcamServer.webcamServer)
     t3.start()
-
-    print(adc.get_ampere(0))
-    print(adc.get_12voltage(1))
 
     t4 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
     t4.start()
