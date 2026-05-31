@@ -28,4 +28,8 @@ class TOF:
         self.hintenTOF = adafruit_vl53l0x.VL53L0X(i2c)
         self.hintenTOF.set_address(0x31)
 
-        #print(f"Sensor 1: {tof.hintenTOF.range} mm  |  Sensor 2: {tof.vorneTOF.range} mm")
+    def get_mm_hinten(self) -> float:
+        return self.hintenTOF.range
+
+    def get_mm_vorne(self) -> float:
+        return self.vorneTOF.range
