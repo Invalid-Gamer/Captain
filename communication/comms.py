@@ -53,11 +53,14 @@ def sendRealValues(batt, lenk, ampere, absv, absh): # Sende Sensordaten über TC
     ampere = "AMPR:" + str(ampere)
     absv = "ABSV:" + str(absv)
     absh = "ABSH:" + str(absh)
-    sendTCP(active_tcp_connection, "SDATA", batt)
-    sendTCP(active_tcp_connection, "SDATA", lenk)
-    sendTCP(active_tcp_connection, "SDATA", ampere)
-    sendTCP(active_tcp_connection, "SDATA", absv)
-    sendTCP(active_tcp_connection, "SDATA", absh)
+    results = [
+        sendTCP(active_tcp_connection, "SDATA", batt),
+        sendTCP(active_tcp_connection, "SDATA", lenk),
+        sendTCP(active_tcp_connection, "SDATA", ampere),
+        sendTCP(active_tcp_connection, "SDATA", absv),
+        sendTCP(active_tcp_connection, "SDATA", absh)
+    ]
+    return all(results)
 
 def handle_incoming_udp(sock): # UDP Empfangen und verpacken
     global latest_udp_data
@@ -73,7 +76,11 @@ def handle_incoming_udp(sock): # UDP Empfangen und verpacken
 
 def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
     t = threading.current_thread()
+    consecutive_failures = 0
     while getattr(t, "do_run", True):
+        if active_tcp_connection is None:
+            logging.debug("Verbindung geschlossen, beende Thread")
+            break
         if not globals.current_mode == 0:
             currentVoltage = adc.get_12voltage(1)
             currentLenkung = adc.get_lenkung(2)
@@ -85,7 +92,15 @@ def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
             logging.debug(f"Sending Ampere: {currentAmpere}")
             logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
             logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
-            sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
+            success = sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
+            if not success:
+                consecutive_failures += 1
+                logging.warning(f"TCP Senden fehlgeschlagen ({consecutive_failures}/3)")
+                if consecutive_failures >= 3:
+                    logging.error("Verbindung als tot erkannt, beende Thread")
+                    break
+            else:
+                consecutive_failures = 0
         time.sleep(1)
 
 def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
@@ -134,6 +149,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 2)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 2000)
                 logging.info(f"Verbunden mit {addr}")
             except socket.timeout:
                 continue
