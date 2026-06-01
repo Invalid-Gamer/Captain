@@ -136,6 +136,10 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
             except socket.timeout:
                 continue
 
+            if not (t2.is_alive()):  # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
+                t2 = threading.Thread(target=tcpHandler, args=(adc, tof,))
+                t2.start()
+
             while active_tcp_connection:
                 try: # Überprüfen ob die Verbindung noch steht
                     readable, _, exceptional = select.select(
@@ -145,7 +149,6 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                     if exceptional:
                         logging.warning("Verbindung fehlerhaft, trenne...")
                         break
-
                     if not readable:
                         continue
 
@@ -153,21 +156,30 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                     if not data:
                         logging.info("Client Verbindung sauber getrennt.")
                         break
-                    msg = data.decode('utf-8', errors='ignore').strip()
-                    key, value = msg.split(':', 1)
-                    if key == "mode":
-                        globals.current_mode = int(value)
-                        logging.debug(f"Current Mode: {globals.current_mode}")
-                    elif key == "conf":
-                        logging.debug(f"Config Value: {value}")
-                        logging.warning(f"Config Section not developed, doing nothing!\nConfig Value: {value}")
-                    else:
-                        logging.debug(f"Command nicht gefunden: {key}:{value}")
-                    logging.debug(msg)
 
-                    if not (t2.is_alive()): # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
-                        t2 = threading.Thread(target=tcpHandler, args=(adc, tof,))
-                        t2.start()
+                    recv_buffer += data.decode('utf-8', errors='ignore')
+
+                    while '\n' in recv_buffer:
+                        line, recv_buffer = recv_buffer.split('\n', 1)
+                        line = line.strip()
+                        if not line:
+                            continue  # "\r\n"-Fragmente und Leerzeilen überspringen
+
+                        if ':' not in line:
+                            logging.debug(f"Nachricht ohne Trenner ignoriert: {repr(line)}")
+                            continue
+
+                        key, value = line.split(':', 1)
+                        logging.debug(line)
+
+                        if key == "mode":
+                            globals.current_mode = int(value)
+                            logging.debug(f"Current Mode: {globals.current_mode}")
+                        elif key == "conf":
+                            logging.warning(f"Config Section not developed!\nConfig Value: {value}")
+                        else:
+                            logging.debug(f"Command nicht gefunden: {key}:{value}")
+
 
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
