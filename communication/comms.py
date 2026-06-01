@@ -124,6 +124,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
 
     while True:
         try:
+            recv_buffer = "";
             t2 = threading.Thread(target=tcpHandler, args=(adc,tof,))
             try: # Verbindung aufbauen und Timeouts festlegen
                 conn, addr = tcp_sock.accept()
