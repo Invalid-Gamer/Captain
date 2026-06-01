@@ -149,7 +149,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 2)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
-                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 2000)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 5000)
                 logging.info(f"Verbunden mit {addr}")
             except socket.timeout:
                 continue
