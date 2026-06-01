@@ -17,7 +17,7 @@ def status_meldung_thread(adc, gps,tof):
 
 def status(adc,gps,tof): # Statusmeldung Func
     logging.info("====")
-    logging.info("Status Meldung gestartet")
+    logging.info("Statusmeldung gestartet")
     logging.info("---Akkus---")
     logging.info(f"Akkustand: {adc.get_12voltage(1)}V {adc.get_ampere(0)}A")
     logging.info("---Sensoren---")
@@ -28,7 +28,7 @@ def status(adc,gps,tof): # Statusmeldung Func
         logging.info(f"Posi: {gps.get_lat()} {gps.get_lon()}")
         logging.info(f"Geschwindigkeit: {gps.get_speed_ms()}")
     except:
-        logging.info("GPS Modul nicht angeschlossen, überspringe GPS Daten")
+        logging.warning("GPS Modul nicht angeschlossen, überspringe GPS Daten")
     logging.info("Status Meldung Ende")
     logging.info("====")
     return
