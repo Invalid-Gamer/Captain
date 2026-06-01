@@ -74,17 +74,18 @@ def handle_incoming_udp(sock): # UDP Empfangen und verpacken
 def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
     t = threading.current_thread()
     while getattr(t, "do_run", True):
-        currentVoltage = adc.get_12voltage(1)
-        currentLenkung = adc.get_lenkung(2)
-        currentAmpere = adc.get_ampere(0)
-        currentAbsV = tof.get_mm_vorne()
-        currentAbsH = tof.get_mm_hinten()
-        logging.debug(f"Sending Voltage: {currentVoltage}")
-        logging.debug(f"Sending Lenkung: {currentLenkung}")
-        logging.debug(f"Sending Ampere: {currentAmpere}")
-        logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
-        logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
-        sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
+        if not globals.current_mode == 0:
+            currentVoltage = adc.get_12voltage(1)
+            currentLenkung = adc.get_lenkung(2)
+            currentAmpere = adc.get_ampere(0)
+            currentAbsV = tof.get_mm_vorne()
+            currentAbsH = tof.get_mm_hinten()
+            logging.debug(f"Sending Voltage: {currentVoltage}")
+            logging.debug(f"Sending Lenkung: {currentLenkung}")
+            logging.debug(f"Sending Ampere: {currentAmpere}")
+            logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
+            logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
+            sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
         time.sleep(1)
 
 def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
