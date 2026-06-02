@@ -1,5 +1,3 @@
-from asyncio.windows_events import NULL
-
 import cv2
 import logging
 import threading

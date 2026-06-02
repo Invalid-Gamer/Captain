@@ -31,7 +31,7 @@ def main():
     t3 = threading.Thread(target=webcamServer.webcamServer)
     t3.start()
 
-    t4 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,))
+    t4 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,), daemon=True)
     t4.start()
 
 if __name__ == '__main__':
