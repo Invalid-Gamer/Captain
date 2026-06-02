@@ -47,7 +47,7 @@ def sendSimulatedValues(conn): #Deprecated
     s2 = sendTCP(conn, "VEL", vel)
     return s1 and s2
 
-def sendRealValues(batt, ampere, lenk, absv, absh): # Sende alle Sensordaten über TCP
+def sendAllValues(batt, ampere, lenk, absv, absh): # Sende alle Sensordaten über TCP
     batt = "BATT:" + str(batt)
     ampere = "AMPR:" + str(ampere)
     lenk = "LENK:" + str(lenk)
@@ -102,7 +102,7 @@ def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
                 logging.debug(f"Sending Lenkung: {currentLenkung}")
                 logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
                 logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
-                success = sendRealValues(currentVoltage,currentAmpere, currentLenkung, currentAbsV, currentAbsH)
+                success = sendAllValues(currentVoltage,currentAmpere, currentLenkung, currentAbsV, currentAbsH)
             else:
                 success = sendRealValues(currentVoltage, currentAmpere)
             if not success:
