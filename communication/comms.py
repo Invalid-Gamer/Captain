@@ -47,17 +47,29 @@ def sendSimulatedValues(conn): #Deprecated
     s2 = sendTCP(conn, "VEL", vel)
     return s1 and s2
 
-def sendRealValues(batt, lenk, ampere, absv, absh): # Sende Sensordaten über TCP
-    batt = "BATT:" + batt
-    lenk = "LENK:" + lenk
-    ampere = "AMPR:" + ampere
-    absv = "ABSV:" + absv
-    absh = "ABSH:" + absh
-    sendTCP(active_tcp_connection, "SDATA", batt)
-    sendTCP(active_tcp_connection, "SDATA", lenk)
-    sendTCP(active_tcp_connection, "SDATA", ampere)
-    sendTCP(active_tcp_connection, "SDATA", absv)
-    sendTCP(active_tcp_connection, "SDATA", absh)
+def sendAllValues(batt, ampere, lenk, absv, absh): # Sende alle Sensordaten über TCP
+    batt = "BATT:" + str(batt)
+    ampere = "AMPR:" + str(ampere)
+    lenk = "LENK:" + str(lenk)
+    absv = "ABSV:" + str(absv)
+    absh = "ABSH:" + str(absh)
+    results = [
+        sendTCP(active_tcp_connection, "SDATA", batt),
+        sendTCP(active_tcp_connection, "SDATA", ampere),
+        sendTCP(active_tcp_connection, "SDATA", lenk),
+        sendTCP(active_tcp_connection, "SDATA", absv),
+        sendTCP(active_tcp_connection, "SDATA", absh)
+    ]
+    return all(results)
+
+def sendRealValues(batt, ampere): # Sende minimierte Sensordaten über TCP
+    batt = "BATT:" + str(batt)
+    ampere = "AMPR:" + str(ampere)
+    results = [
+        sendTCP(active_tcp_connection, "SDATA", batt),
+        sendTCP(active_tcp_connection, "SDATA", ampere),
+    ]
+    return all(results)
 
 def handle_incoming_udp(sock): # UDP Empfangen und verpacken
     global latest_udp_data
@@ -73,18 +85,34 @@ def handle_incoming_udp(sock): # UDP Empfangen und verpacken
 
 def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
     t = threading.current_thread()
+    consecutive_failures = 0
     while getattr(t, "do_run", True):
-        currentVoltage = adc.get_12voltage(1)
-        currentLenkung = adc.get_lenkung(2)
-        currentAmpere = adc.get_ampere(0)
-        currentAbsV = tof.get_mm_vorne()
-        currentAbsH = tof.get_mm_hinten()
-        logging.debug(f"Sending Voltage: {currentVoltage}")
-        logging.debug(f"Sending Lenkung: {currentLenkung}")
-        logging.debug(f"Sending Ampere: {currentAmpere}")
-        logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
-        logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
-        sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
+        if active_tcp_connection is None:
+            logging.debug("Verbindung geschlossen, beende Thread")
+            break
+        if not globals.current_mode == 0:
+            currentVoltage = adc.get_12voltage(1)
+            currentAmpere = adc.get_ampere(0)
+            logging.debug(f"Sending Voltage: {currentVoltage}")
+            logging.debug(f"Sending Ampere: {currentAmpere}")
+            if globals.current_mode >= 3:
+                currentLenkung = adc.get_lenkung(2)
+                currentAbsV = tof.get_mm_vorne()
+                currentAbsH = tof.get_mm_hinten()
+                logging.debug(f"Sending Lenkung: {currentLenkung}")
+                logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
+                logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
+                success = sendAllValues(currentVoltage,currentAmpere, currentLenkung, currentAbsV, currentAbsH)
+            else:
+                success = sendRealValues(currentVoltage, currentAmpere)
+            if not success:
+                consecutive_failures += 1
+                logging.warning(f"TCP Senden fehlgeschlagen ({consecutive_failures}/3)")
+                if consecutive_failures >= 3:
+                    logging.error("Verbindung als tot erkannt, beende Thread")
+                    break
+            else:
+                consecutive_failures = 0
         time.sleep(1)
 
 def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
@@ -112,8 +140,17 @@ def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und 
                 motors.stop()
                 motors.stoplenkung()
 
+def incomingTcpHandler(key, value): # Es werden zukünftig mehr Befehle per TCP folgen, daher eine eigene Funktion
+    if key == "mode":
+        globals.current_mode = int(value)
+        logging.debug(f"Current Mode: {globals.current_mode}")
+    elif key == "conf":
+        logging.warning(f"Config Section not developed!\nConfig Value: {value}") # Zukunft
+    else:
+        logging.debug(f"Command nicht gefunden: {key}:{value}")
+
 def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
-    t1 = threading.Thread(target=udpHandler)
+    t1 = threading.Thread(target=udpHandler, args=(adc,motors,))
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -124,6 +161,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
 
     while True:
         try:
+            recv_buffer = "";
             t2 = threading.Thread(target=tcpHandler, args=(adc,tof,))
             try: # Verbindung aufbauen und Timeouts festlegen
                 conn, addr = tcp_sock.accept()
@@ -132,9 +170,14 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 2)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 5000)
                 logging.info(f"Verbunden mit {addr}")
             except socket.timeout:
                 continue
+
+            if not (t2.is_alive()):  # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
+                t2 = threading.Thread(target=tcpHandler, args=(adc, tof,))
+                t2.start()
 
             while active_tcp_connection:
                 try: # Überprüfen ob die Verbindung noch steht
@@ -145,7 +188,6 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                     if exceptional:
                         logging.warning("Verbindung fehlerhaft, trenne...")
                         break
-
                     if not readable:
                         continue
 
@@ -153,20 +195,22 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                     if not data:
                         logging.info("Client Verbindung sauber getrennt.")
                         break
-                    msg = data.decode('utf-8', errors='ignore').strip()
-                    key, value = msg.split(':')
-                    if key == "mode":
-                        globals.current_mode = int(value)
-                        logging.debug(f"Current Mode: {globals.current_mode}")
-                    elif key == "conf":
-                        logging.debug(f"Config Value: {value}")
-                        logging.warning(f"Config Section not developed, doing nothing!\nConfig Value: {value}")
-                    else:
-                        logging.debug(f"Command nicht gefunden: {key}:{value}")
-                    logging.debug(msg)
 
-                    if not (t2.is_alive()): # Fehler ist bekannt, nicht critical aber Lösung noch nicht gefunden
-                        t2.start()
+                    recv_buffer += data.decode('utf-8', errors='ignore')
+
+                    while '\n' in recv_buffer:
+                        line, recv_buffer = recv_buffer.split('\n', 1)
+                        line = line.strip()
+                        if not line:
+                            continue  # "\r\n"-Fragmente und Leerzeilen überspringen
+
+                        if ':' not in line:
+                            logging.debug(f"Nachricht ohne Trenner ignoriert: {repr(line)}")
+                            continue
+
+                        key, value = line.split(':', 1)
+                        logging.debug(line)
+                        incomingTcpHandler(key, value) # Verarbeitet alle eingehenden tcp-Nachrichten von Control
 
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")

@@ -16,6 +16,6 @@ def throttled():
             logging.warning("Main B Bus Undervolt !")
 
         if value & 0x10000:
-            logging.warning("Main B Bus normal")
+            logging.warning("Main B Bus has Undervolted since boot")
 
         time.sleep(10)

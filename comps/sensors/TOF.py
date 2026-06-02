@@ -8,7 +8,7 @@ class TOF:
     def __init__(self) -> None:
         i2c = busio.I2C(board.SCL, board.SDA)
 
-        xshutvorne = digitalio.DigitalInOut(board.D4)  # GPIO17
+        xshutvorne = digitalio.DigitalInOut(board.D4)  # GPIO4
         xshuthinten = digitalio.DigitalInOut(board.D17)  # GPIO27
 
         xshutvorne.direction = digitalio.Direction.OUTPUT
