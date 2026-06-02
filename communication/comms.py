@@ -47,18 +47,27 @@ def sendSimulatedValues(conn): #Deprecated
     s2 = sendTCP(conn, "VEL", vel)
     return s1 and s2
 
-def sendRealValues(batt, lenk, ampere, absv, absh): # Sende Sensordaten über TCP
+def sendRealValues(batt, ampere, lenk, absv, absh): # Sende alle Sensordaten über TCP
     batt = "BATT:" + str(batt)
-    lenk = "LENK:" + str(lenk)
     ampere = "AMPR:" + str(ampere)
+    lenk = "LENK:" + str(lenk)
     absv = "ABSV:" + str(absv)
     absh = "ABSH:" + str(absh)
     results = [
         sendTCP(active_tcp_connection, "SDATA", batt),
-        sendTCP(active_tcp_connection, "SDATA", lenk),
         sendTCP(active_tcp_connection, "SDATA", ampere),
+        sendTCP(active_tcp_connection, "SDATA", lenk),
         sendTCP(active_tcp_connection, "SDATA", absv),
         sendTCP(active_tcp_connection, "SDATA", absh)
+    ]
+    return all(results)
+
+def sendRealValues(batt, ampere): # Sende minimierte Sensordaten über TCP
+    batt = "BATT:" + str(batt)
+    ampere = "AMPR:" + str(ampere)
+    results = [
+        sendTCP(active_tcp_connection, "SDATA", batt),
+        sendTCP(active_tcp_connection, "SDATA", ampere),
     ]
     return all(results)
 
@@ -83,16 +92,19 @@ def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
             break
         if not globals.current_mode == 0:
             currentVoltage = adc.get_12voltage(1)
-            currentLenkung = adc.get_lenkung(2)
             currentAmpere = adc.get_ampere(0)
-            currentAbsV = tof.get_mm_vorne()
-            currentAbsH = tof.get_mm_hinten()
             logging.debug(f"Sending Voltage: {currentVoltage}")
-            logging.debug(f"Sending Lenkung: {currentLenkung}")
             logging.debug(f"Sending Ampere: {currentAmpere}")
-            logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
-            logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
-            success = sendRealValues(currentVoltage,currentLenkung, currentAmpere, currentAbsV, currentAbsH)
+            if globals.current_mode >= 3:
+                currentLenkung = adc.get_lenkung(2)
+                currentAbsV = tof.get_mm_vorne()
+                currentAbsH = tof.get_mm_hinten()
+                logging.debug(f"Sending Lenkung: {currentLenkung}")
+                logging.debug(f"Sending Abstand Vorne: {currentAbsV}")
+                logging.debug(f"Sending Abstand Hinten: {currentAbsH}")
+                success = sendRealValues(currentVoltage,currentAmpere, currentLenkung, currentAbsV, currentAbsH)
+            else:
+                success = sendRealValues(currentVoltage, currentAmpere)
             if not success:
                 consecutive_failures += 1
                 logging.warning(f"TCP Senden fehlgeschlagen ({consecutive_failures}/3)")
@@ -127,6 +139,15 @@ def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und 
             if latest_udp_msg < time.time() - 1:
                 motors.stop()
                 motors.stoplenkung()
+
+def incomingTcpHandler(key, value): # Es werden zukünftig mehr Befehle per TCP folgen, daher eine eigene Funktion
+    if key == "mode":
+        globals.current_mode = int(value)
+        logging.debug(f"Current Mode: {globals.current_mode}")
+    elif key == "conf":
+        logging.warning(f"Config Section not developed!\nConfig Value: {value}") # Zukunft
+    else:
+        logging.debug(f"Command nicht gefunden: {key}:{value}")
 
 def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
     t1 = threading.Thread(target=udpHandler, args=(adc,motors,))
@@ -189,15 +210,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
 
                         key, value = line.split(':', 1)
                         logging.debug(line)
-
-                        if key == "mode":
-                            globals.current_mode = int(value)
-                            logging.debug(f"Current Mode: {globals.current_mode}")
-                        elif key == "conf":
-                            logging.warning(f"Config Section not developed!\nConfig Value: {value}")
-                        else:
-                            logging.debug(f"Command nicht gefunden: {key}:{value}")
-
+                        incomingTcpHandler(key, value) # Verarbeitet alle eingehenden tcp-Nachrichten von Control
 
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")
