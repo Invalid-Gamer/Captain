@@ -19,7 +19,6 @@ def main():
     motors = Motors() # Motors
 
     web_server.start_web_server(port=5000)
-    logging.info("Web-Server auf http://localhost:5000 gestartet")
 
     def sensor_data_loop():
         while True:

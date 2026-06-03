@@ -1,8 +1,21 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from threading import Thread
 import logging
+import cv2
 
 app = Flask(__name__)
+camera = cv2.VideoCapture(0)
+
+def generate_frames():
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 # Aktuelle Sensordaten, die dein Hauptprogramm aktualisieren kann
 sensor_data = {
@@ -14,6 +27,10 @@ sensor_data = {
     'steering': 0.0,
     'connected': False,
 }
+
+@app.route('/camera/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/sensors/batt/voltage', methods=['GET'])
 def get_battery_voltage():
