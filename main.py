@@ -1,10 +1,11 @@
 import logging
 import threading
+import time
 
 from comps.sensors import ADC, Batterie_Prozent, TOF
 from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
-from backend import logs, status_meldung, undervoltage, webcamServer
+from backend import logs, status_meldung, undervoltage, web_server
 from comps.motors.motors import Motors
 import globals
 
@@ -17,6 +18,16 @@ def main():
     gps = pyGPS.pyGPS() # GPS Modul
     motors = Motors() # Motors
 
+    web_server.start_web_server(port=5000)
+
+    def sensor_data_loop():
+        while True:
+            web_server.update_sensor_data(adc, tof, gps)
+            time.sleep(1)
+
+    sensor_thread = threading.Thread(target=sensor_data_loop, daemon=True)
+    sensor_thread.start()
+
     logging.info("Startet 2min Status Meldung ...")
     status_meldung_thread = threading.Thread(target=status_meldung.status_meldung_thread,args=(adc,gps,tof,),daemon=True)
     status_meldung_thread.start()
@@ -28,11 +39,6 @@ def main():
     t1.start()
     t2 = threading.Thread(target=comms.udpHandler, args=(adc,motors,))
     t2.start()
-    t3 = threading.Thread(target=webcamServer.webcamServer, args=(adc,tof,))
-    t3.start()
-
-    t4 = threading.Thread(target=Batterie_Prozent.collect_Bat_Prozent, args=(adc,), daemon=True)
-    t4.start()
 
 if __name__ == '__main__':
     main()
