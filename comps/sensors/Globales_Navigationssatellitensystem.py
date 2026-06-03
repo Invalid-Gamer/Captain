@@ -1,4 +1,4 @@
-#die person die die datei umbenennt wird sterben
+# Author: @ingressy
 import logging
 
 import serial

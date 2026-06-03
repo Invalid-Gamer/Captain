@@ -11,3 +11,4 @@ SPIMISO = board.MISO
 
 # Globale Variablen
 current_mode: int = 0
+web_server_port = 5000

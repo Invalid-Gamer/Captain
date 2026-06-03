@@ -1,3 +1,4 @@
+# Author: @ingressy
 import board
 import busio
 import digitalio

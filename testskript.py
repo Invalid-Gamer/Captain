@@ -1,3 +1,4 @@
+# Deprecated | Author: @Invalid-Gamer *Vibecoded*
 import socket
 import struct
 import time

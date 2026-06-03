@@ -1,3 +1,4 @@
+# Author: @Invalid-Gamer
 import logging
 import socket
 import struct
@@ -180,7 +181,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                 t2.start()
 
             while active_tcp_connection:
-                try: # Überprüfen ob die Verbindung noch steht
+                try: # Überprüfen, ob die Verbindung noch steht
                     readable, _, exceptional = select.select(
                         [active_tcp_connection], [], [active_tcp_connection], 0.5
                     )
@@ -196,15 +197,15 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                         logging.info("Client Verbindung sauber getrennt.")
                         break
 
-                    recv_buffer += data.decode('utf-8', errors='ignore')
+                    recv_buffer += data.decode('utf-8', errors='ignore') # Schreibe empfangene Werte in einen Buffer
 
-                    while '\n' in recv_buffer:
+                    while '\n' in recv_buffer: # Verarbeitung des Buffers ab \n
                         line, recv_buffer = recv_buffer.split('\n', 1)
                         line = line.strip()
                         if not line:
                             continue  # "\r\n"-Fragmente und Leerzeilen überspringen
 
-                        if ':' not in line:
+                        if ':' not in line: # Fehlerhafte tcp Nachricht
                             logging.debug(f"Nachricht ohne Trenner ignoriert: {repr(line)}")
                             continue
 
@@ -222,7 +223,7 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
             if active_tcp_connection:
                 active_tcp_connection.close()
             active_tcp_connection = None
-            if t2.is_alive():
+            if t2.is_alive(): # Beende tcpHanlder
                 t2.do_run = False
                 t2.join(timeout=5)
                 if t2.is_alive():

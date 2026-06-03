@@ -1,8 +1,9 @@
+# Author: @Invalid-Gamer
 import logging
 import threading
 import time
 
-from comps.sensors import ADC, Batterie_Prozent, TOF
+from comps.sensors import ADC, TOF # GPIO Daten
 from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
 from backend import logs, status_meldung, undervoltage, web_server
@@ -18,7 +19,7 @@ def main():
     gps = pyGPS.pyGPS() # GPS Modul
     motors = Motors() # Motors
 
-    web_server.start_web_server(port=5000)
+    web_server.start_web_server(port=globals.web_server_port)
 
     def sensor_data_loop():
         while True:

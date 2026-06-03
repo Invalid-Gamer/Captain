@@ -1,8 +1,9 @@
+# Author: @ingressy
 import time
 
 messungen = []
 KAP_AH = 9.0
-# Versuch, die verbleibende Akkuladung zu berechnen: Zu ungenau
+# Versuch, die verbleibende Akkuladung zu berechnen: Zu ungenau -> Unused
 
 def get_Bat_Prozent() -> float:
     if not messungen:

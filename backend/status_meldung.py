@@ -1,3 +1,4 @@
+# Authors: @ingressy, @Invalid-Gamer
 import logging
 import schedule
 import time

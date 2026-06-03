@@ -1,4 +1,4 @@
-from comps.motors.motors import Motors
+# Author: @Invalid-Gamer
 import globals
 import logging
 VELOCITY = 50

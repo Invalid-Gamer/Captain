@@ -1,3 +1,4 @@
+# Author: @Phongoderso
 from flask import Flask, jsonify, Response
 from threading import Thread
 import logging
@@ -17,9 +18,15 @@ def generate_frames():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
+@app.after_request
+def after_request(response):
+    response.headers.add['Access-Control-Allow-Origin'] = '*'
+    response.headers.add['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers.add['Access-Control-Allow-Headers'] = 'Content-Type'
+
 # Aktuelle Sensordaten, die dein Hauptprogramm aktualisieren kann
 sensor_data = {
-    'battery': 0.0,
+    'voltage': 0.0,
     'ampere': 0.0,
     'speed': 0.0,
     'distance_front': 0.0,
@@ -35,7 +42,10 @@ def video_feed():
 @app.route('/sensors/batt/voltage', methods=['GET'])
 def get_battery_voltage():
     """Gibt die aktuelle Batterie-Spannung zurück."""
-    return jsonify({'battery': sensor_data['battery']})
+    return jsonify({
+        'voltage': sensor_data['voltage'],
+        'battery': sensor_data['voltage'],
+    })
 
 @app.route('/sensors/batt/ampere', methods=['GET'])
 def get_battery_ampere():
@@ -86,7 +96,7 @@ def update_sensor_data(adc, tof, gps=None):
     Aktualisiert die globalen Sensordaten mit Werten aus deinen Sensorobjekten.
     """
     try:
-        sensor_data['battery'] = adc.get_12voltage(1)
+        sensor_data['voltage'] = adc.get_12voltage(1)
         sensor_data['ampere'] = adc.get_ampere(0)
         sensor_data['distance_front'] = tof.get_mm_vorne()
         sensor_data['distance_back'] = tof.get_mm_hinten()
