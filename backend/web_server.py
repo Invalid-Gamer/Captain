@@ -108,7 +108,7 @@ def update_sensor_data(adc, tof, gps=None):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     start_web_server(port=5000)
     print('Web-Server läuft auf http://localhost:5000')
     input('Drücke Enter zum Beenden...')
