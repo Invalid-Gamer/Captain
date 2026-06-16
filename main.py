@@ -38,7 +38,7 @@ def main():
 
     t1 = threading.Thread(target=comms.connHandler, args=(adc,motors,tof,))
     t1.start()
-    t2 = threading.Thread(target=comms.udpHandler, args=(adc,motors,))
+    t2 = threading.Thread(target=comms.udpHandler, args=(adc,motors,tof))
     t2.start()
 
 if __name__ == '__main__':
