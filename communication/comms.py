@@ -116,7 +116,7 @@ def tcpHandler(adc,tof): # Thread, der Sensordaten holt und versendet
                 consecutive_failures = 0
         time.sleep(1)
 
-def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
+def udpHandler(adc, motors, tof): # Für modes 1 und 2: Joystick Daten empfangen und verarbeiten
         t = threading.current_thread()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(('0.0.0.0', UDP_PORT))
@@ -131,7 +131,7 @@ def udpHandler(adc, motors): # Für modes 1 und 2: Joystick Daten empfangen und 
                     x, y = struct.unpack('<HH', data[:4])
                     latest_udp_data_x = x
                     latest_udp_data_y = y
-                    inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc)
+                    inputHandler(latest_udp_data_x, latest_udp_data_y, motors, adc, tof)
             except socket.timeout:
                 pass
             except Exception as e:
@@ -151,7 +151,7 @@ def incomingTcpHandler(key, value): # Es werden zukünftig mehr Befehle per TCP 
         logging.debug(f"Command nicht gefunden: {key}:{value}")
 
 def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
-    t1 = threading.Thread(target=udpHandler, args=(adc,motors,))
+    t1 = threading.Thread(target=udpHandler, args=(adc,motors,tof,))
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

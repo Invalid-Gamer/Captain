@@ -5,9 +5,10 @@ import logging
 import cv2
 
 app = Flask(__name__)
-camera = cv2.VideoCapture(0)
+cameraFront = cv2.VideoCapture(0)
+cameraBack = cv2.VideoCapture(1)
 
-def generate_frames():
+def generate_frames(camera):
     while True:
         success, frame = camera.read()
         if not success:
@@ -20,9 +21,9 @@ def generate_frames():
 
 @app.after_request
 def after_request(response):
-    response.headers.add['Access-Control-Allow-Origin'] = '*'
-    response.headers.add['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
-    response.headers.add['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
 
 # Aktuelle Sensordaten, die dein Hauptprogramm aktualisieren kann
 sensor_data = {
@@ -35,9 +36,13 @@ sensor_data = {
     'connected': False,
 }
 
-@app.route('/camera/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/camera/front_feed')
+def front_feed():
+    return Response(generate_frames(cameraFront), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/camera/back_feed')
+def back_feed():
+    return Response(generate_frames(cameraBack), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/sensors/batt/voltage', methods=['GET'])
 def get_battery_voltage():
