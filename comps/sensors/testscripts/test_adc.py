@@ -6,7 +6,8 @@
 import time
 import logging
 
-from adc import ADC  # Pfad ggf. anpassen
+from comps.sensors import ADC
+
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -14,7 +15,7 @@ POLL_INTERVAL = 0.5  # Sekunden zwischen den Messungen
 
 
 def main() -> None:
-    adc = ADC()
+    adc = ADC.ADC()
     print("Channel | Rohwert (12bit) | Chip-Spannung [V]")
     print("-" * 45)
     try:
