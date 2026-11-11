@@ -1,23 +1,114 @@
 # Author: @Phongoderso
 from flask import Flask, jsonify, Response
-from threading import Thread
+from threading import Thread, Condition
+from werkzeug.serving import WSGIRequestHandler
 import logging
+import socket
+import sys
+import time
 import cv2
 
 app = Flask(__name__)
-cameraFront = cv2.VideoCapture(0)
-cameraBack = cv2.VideoCapture(1)
 
-def generate_frames(camera):
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+# --- Kamera-Einstellungen ---
+CAM_WIDTH, CAM_HEIGHT, CAM_FPS = 640, 480, 30   # kleiner = weniger Verzögerung
+JPEG_QUALITY = 70                                # 60 bis 80 ist meist ein guter Kompromiss
+
+
+class Camera:
+    """
+    Liest eine Kamera in einem eigenen Thread und hält immer nur das neueste Bild bereit.
+
+    Gegenüber dem alten Code:
+    - Kein Rückstau: Veraltete Kamerabilder werden verworfen, statt in einer Warteschlange zu altern.
+    - Jedes Bild wird nur einmal kodiert, egal wie viele Zuschauer es gibt.
+    - Solange niemand zuschaut, wird nichts dekodiert oder kodiert (spart CPU und Strom).
+    - Hängt die Kamera, wird sie automatisch neu geöffnet.
+    """
+
+    def __init__(self, index, name):
+        self.index, self.name = index, name
+        self.jpg = None          # neuestes Bild als JPEG
+        self.seq = 0             # Zähler, wird mit jedem neuen Bild größer
+        self.viewers = 0         # Anzahl aktiver Zuschauer
+        self.cond = Condition()
+        Thread(target=self._run, daemon=True).start()
+
+    def _open(self):
+        backend = cv2.CAP_V4L2 if sys.platform.startswith('linux') else cv2.CAP_ANY
+        cap = cv2.VideoCapture(self.index, backend)
+        # MJPG: Die Kamera komprimiert selbst. Das spart USB-Bandbreite, besonders bei zwei Kameras.
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAM_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAM_HEIGHT)
+        cap.set(cv2.CAP_PROP_FPS, CAM_FPS)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)       # nur das neueste Bild puffern
+        return cap
+
+    def _run(self):
+        cap, fails = self._open(), 0
+        while True:
+            if not cap.grab():                    # wartet auf das nächste Kamerabild
+                fails += 1
+                if fails >= 30:                   # Kamera hängt: neu öffnen
+                    logging.warning(f'Kamera {self.name}: öffne neu')
+                    cap.release()
+                    time.sleep(1)
+                    cap, fails = self._open(), 0
+                else:
+                    time.sleep(0.05)
+                continue
+            fails = 0
+            if self.viewers == 0:                 # niemand schaut: Bild nur verwerfen
+                continue
+            ok, frame = cap.retrieve()
+            if not ok:
+                continue
+            ok, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+            if ok:
+                with self.cond:
+                    self.jpg = buf.tobytes()
+                    self.seq += 1
+                    self.cond.notify_all()
+
+    def frames(self):
+        """Stream für einen Zuschauer. Ein langsamer Zuschauer überspringt Bilder, statt zu verzögern."""
+        with self.cond:
+            self.viewers += 1
+            seq = self.seq                        # alte Bilder nicht mehr ausliefern
+        try:
+            while True:
+                with self.cond:
+                    if not self.cond.wait_for(lambda: self.seq != seq, timeout=5):
+                        continue                  # kein neues Bild: Verbindung offen halten
+                    seq, jpg = self.seq, self.jpg
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n' % len(jpg)
+                       + jpg + b'\r\n')
+        finally:
+            with self.cond:
+                self.viewers -= 1
+
+
+class StreamingRequestHandler(WSGIRequestHandler):
+    """Verhindert Verzögerungen auf TCP-Ebene beim Streamen."""
+
+    def setup(self):
+        super().setup()
+        # Kleine Datenpakete sofort senden (kein Nagle-Algorithmus).
+        self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        # Kleiner Sendepuffer: Bei langsamem WLAN stauen sich nicht mehrere alte Bilder an.
+        self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 131072)
+
+
+cameraFront = Camera(0, 'front')
+cameraBack = Camera(1, 'back')
+
+
+def stream(camera):
+    return Response(camera.frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame',
+                    headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
+
 
 @app.after_request
 def after_request(response):
@@ -39,11 +130,11 @@ sensor_data = {
 
 @app.route('/camera/front_feed')
 def front_feed():
-    return Response(generate_frames(cameraFront), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return stream(cameraFront)
 
 @app.route('/camera/back_feed')
 def back_feed():
-    return Response(generate_frames(cameraBack), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return stream(cameraBack)
 
 @app.route('/sensors/batt/voltage', methods=['GET'])
 def get_battery_voltage():
@@ -90,7 +181,8 @@ def get_status():
 def start_web_server(port=5000, debug=False):
     def run():
         logging.info(f'Starte Web-Server auf Port {port}')
-        app.run(host='0.0.0.0', port=port, debug=debug, use_reloader=False)
+        app.run(host='0.0.0.0', port=port, debug=debug, use_reloader=False,
+                threaded=True, request_handler=StreamingRequestHandler)
 
     thread = Thread(target=run, daemon=True)
     thread.start()
