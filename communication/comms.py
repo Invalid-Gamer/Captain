@@ -150,13 +150,13 @@ def incomingTcpHandler(key, value, hupe): # Es werden zukünftig mehr Befehle pe
         logging.warning(f"Config Section not developed!\nConfig Value: {value}") # Zukunft
     elif key == "hupe":
         logging.debug(f"Trying to handle hupe: {value}")
-        if value == 2:
+        if int(value) == 2:
             hupe.impulsHupe()
             logging.debug("Hornimpulse")
-        elif value == 1:
+        elif int(value) == 1:
             hupe.setHupe(True)
             logging.debug("Horn on")
-        elif value == 0:
+        elif int(value) == 0:
             hupe.setHupe(False)
             logging.debug("Horn off")
     else:
