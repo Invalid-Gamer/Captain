@@ -5,7 +5,7 @@ import math
 
 from comps.sensors.TOF import TOF
 
-VELOCITY = 50
+VELOCITY = 75
 LENKUNG = 75
 DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
@@ -15,11 +15,11 @@ def inputHandler(x,y, motors, adc, tof): # Verarbeitet rohe Joystick eingaben
     currentLenkung = adc.get_lenkung(2)
     if globals.current_mode == 1:
         if y > DEADZONE_POS:
-            speed = ((math.exp(3 * (y - DEADZONE_POS) / (4095 - DEADZONE_POS)) - 1) / (math.exp(3) - 1)) * VELOCITY
+            speed = ((math.exp(2 * (y - DEADZONE_POS) / (4095 - DEADZONE_POS)) - 1) / (math.exp(2) - 1)) * VELOCITY
             speed = max(0.0, min(100.0, speed))
             motors.vorwaerts(speed)
         elif y < DEADZONE_NEG:
-            speed = ((math.exp(3 * (DEADZONE_NEG - y) / DEADZONE_NEG) - 1) / (math.exp(3) - 1)) * VELOCITY
+            speed = ((math.exp(2 * (DEADZONE_NEG - y) / DEADZONE_NEG) - 1) / (math.exp(2) - 1)) * VELOCITY
             speed = max(0.0, min(100.0, speed))
             motors.rueckwaerts(speed)
         else:
