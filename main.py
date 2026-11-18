@@ -8,6 +8,7 @@ from comps.sensors import Globales_Navigationssatellitensystem as pyGPS
 from communication import comms
 from backend import logs, status_meldung, undervoltage, web_server
 from comps.motors.motors import Motors
+from comps.hupe import Hupe
 import globals
 
 def main():
@@ -18,6 +19,7 @@ def main():
     tof = TOF.TOF() # Time of Flight Module
     gps = pyGPS.pyGPS() # GPS Modul
     motors = Motors() # Motors
+    hupe = Hupe()
 
     web_server.start_web_server(port=globals.web_server_port)
 
@@ -36,7 +38,7 @@ def main():
     undervolt = threading.Thread(target=undervoltage.throttled, daemon=True)
     undervolt.start()
 
-    t1 = threading.Thread(target=comms.connHandler, args=(adc,motors,tof,))
+    t1 = threading.Thread(target=comms.connHandler, args=(adc,motors,tof,hupe,))
     t1.start()
     t2 = threading.Thread(target=comms.udpHandler, args=(adc,motors,tof))
     t2.start()

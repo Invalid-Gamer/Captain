@@ -9,6 +9,7 @@ import select
 
 from communication.inputHandler import inputHandler
 import globals
+from comps.hupe import Hupe
 
 latest_tcp_msg = ""
 active_tcp_connection = None
@@ -141,16 +142,23 @@ def udpHandler(adc, motors, tof): # Für modes 1 und 2: Joystick Daten empfangen
                 motors.stop()
                 motors.stoplenkung()
 
-def incomingTcpHandler(key, value): # Es werden zukünftig mehr Befehle per TCP folgen, daher eine eigene Funktion
+def incomingTcpHandler(key, value, hupe): # Es werden zukünftig mehr Befehle per TCP folgen, daher eine eigene Funktion
     if key == "mode":
         globals.current_mode = int(value)
         logging.debug(f"Current Mode: {globals.current_mode}")
     elif key == "conf":
         logging.warning(f"Config Section not developed!\nConfig Value: {value}") # Zukunft
+    elif key == "hupe":
+        if int(value) == 2:
+            hupe.impulsHupe()
+        elif int(value) == 1:
+            hupe.setHupe(True)
+        elif int(value) == 0:
+            hupe.setHupe(False)
     else:
         logging.debug(f"Command nicht gefunden: {key}:{value}")
 
-def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
+def connHandler(adc, motors,tof,hupe): # Thread, Hauptschleife für Kommunikation
     t1 = threading.Thread(target=udpHandler, args=(adc,motors,tof,))
     global active_tcp_connection, latest_tcp_msg
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -210,8 +218,8 @@ def connHandler(adc, motors,tof): # Thread, Hauptschleife für Kommunikation
                             continue
 
                         key, value = line.split(':', 1)
-                        logging.debug(line)
-                        incomingTcpHandler(key, value) # Verarbeitet alle eingehenden tcp-Nachrichten von Control
+                        logging.debug(f"Nachricht per TCP empfangen: {repr(line)}")
+                        incomingTcpHandler(key, value, hupe) # Verarbeitet alle eingehenden tcp-Nachrichten von Control
 
                 except Exception as e:
                     logging.error(f"Fehler beim Empfangen: {e}")

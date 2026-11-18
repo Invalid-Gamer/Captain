@@ -101,7 +101,7 @@ class StreamingRequestHandler(WSGIRequestHandler):
 
 
 cameraFront = Camera(0, 'front')
-cameraBack = Camera(1, 'back')
+cameraBack = Camera(2, 'back')
 
 
 def stream(camera):
