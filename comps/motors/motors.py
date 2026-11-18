@@ -23,7 +23,7 @@ class Motors:
         self.pwm2.duty_cycle = int(speed / 100 * 65535)
 
     def stop(self) -> None:
-        self.pwm2.duty_cycle = 0
+        self.pwm2.duty_cycle = max(0, self.pwm2.duty_cycle - 3000)
 
     def stoplenkung(self):
         self.pwm1.duty_cycle = 0
