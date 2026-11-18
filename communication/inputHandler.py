@@ -1,6 +1,7 @@
 # Author: @Invalid-Gamer
 import globals
 import logging
+import math
 
 from comps.sensors.TOF import TOF
 
@@ -14,11 +15,11 @@ def inputHandler(x,y, motors, adc, tof): # Verarbeitet rohe Joystick eingaben
     currentLenkung = adc.get_lenkung(2)
     if globals.current_mode == 1:
         if y > DEADZONE_POS:
-            speed = ((y - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
+            speed = ((math.exp(3 * (y - DEADZONE_POS) / (4095 - DEADZONE_POS)) - 1) / (math.exp(3) - 1)) * VELOCITY
             speed = max(0.0, min(100.0, speed))
             motors.vorwaerts(speed)
         elif y < DEADZONE_NEG:
-            speed = ((DEADZONE_NEG - y) / DEADZONE_NEG) * VELOCITY
+            speed = ((math.exp(3 * (DEADZONE_NEG - y) / DEADZONE_NEG) - 1) / (math.exp(3) - 1)) * VELOCITY
             speed = max(0.0, min(100.0, speed))
             motors.rueckwaerts(speed)
         else:
@@ -64,14 +65,14 @@ def inputHandler(x,y, motors, adc, tof): # Verarbeitet rohe Joystick eingaben
         currentAbsH = tof.get_mm_vorne()
         if y > DEADZONE_POS:
             if currentAbsV >= 501:
-                speed = ((y - DEADZONE_POS) / (4095 - DEADZONE_POS)) * VELOCITY
+                speed = ((math.exp(3 * (y - DEADZONE_POS) / (4095 - DEADZONE_POS)) - 1) / (math.exp(3) - 1)) * VELOCITY
                 speed = max(0.0, min(100.0, speed))
                 motors.vorwaerts(speed)
             else:
                 motors.stop()
         elif y < DEADZONE_NEG:
             if currentAbsH >= 501:
-                speed = ((DEADZONE_NEG - y) / DEADZONE_NEG) * VELOCITY
+                speed = ((math.exp(3 * (DEADZONE_NEG - y) / DEADZONE_NEG) - 1) / (math.exp(3) - 1)) * VELOCITY
                 speed = max(0.0, min(100.0, speed))
                 motors.rueckwaerts(speed)
             else:
