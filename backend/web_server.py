@@ -189,20 +189,40 @@ def start_web_server(port=5000, debug=False):
     return thread
 
 
+_sensor_errors = {}   # Sensorname -> (letzte Fehlermeldung, Zeitpunkt des letzten Log-Eintrags)
+
+
+def _lese(name, key, funktion):
+    """
+    Liest einen Sensor einzeln: Ein ausgefallener Sensor blockiert die anderen nicht,
+    und gleiche Fehler stehen nicht jede Sekunde im Log.
+    """
+    try:
+        sensor_data[key] = funktion()
+    except Exception as e:
+        meldung, jetzt = repr(e), time.monotonic()
+        alt = _sensor_errors.get(name)
+        if alt is None or alt[0] != meldung or jetzt - alt[1] > 30:   # neue Fehlerart oder alle 30 s
+            logging.error(f'Sensor "{name}" ({key}) antwortet nicht: {meldung}')
+            _sensor_errors[name] = (meldung, jetzt)
+        return False
+    if _sensor_errors.pop(name, None):
+        logging.info(f'Sensor "{name}" liefert wieder Werte')
+    return True
+
+
 def update_sensor_data(adc, tof, gps=None):
     """
     Aktualisiert die globalen Sensordaten mit Werten aus deinen Sensorobjekten.
     """
-    try:
-        sensor_data['voltage'] = adc.get_12voltage(1)
-        sensor_data['ampere'] = adc.get_ampere(0)
-        sensor_data['distance_front'] = tof.get_mm_vorne()
-        sensor_data['distance_back'] = tof.get_mm_hinten()
-        sensor_data['steering'] = adc.get_lenkung(2)
-        sensor_data['connected'] = True
-    except Exception as e:
-        logging.error(f'Fehler beim Aktualisieren der Sensordaten: {e}')
-        sensor_data['connected'] = False
+    ergebnisse = [
+        _lese('ADC Kanal 1 (Spannung)', 'voltage', lambda: adc.get_12voltage(1)),
+        _lese('ADC Kanal 0 (Strom)', 'ampere', lambda: adc.get_ampere(0)),
+        _lese('ToF vorne', 'distance_front', tof.get_mm_vorne),
+        _lese('ToF hinten', 'distance_back', tof.get_mm_hinten),
+        _lese('ADC Kanal 2 (Lenkung)', 'steering', lambda: adc.get_lenkung(2)),
+    ]
+    sensor_data['connected'] = all(ergebnisse)
 
 
 if __name__ == '__main__':
