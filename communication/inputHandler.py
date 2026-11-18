@@ -5,7 +5,7 @@ import math
 
 from comps.sensors.TOF import TOF
 
-VELOCITY = 50
+VELOCITY = 100
 LENKUNG = 75
 DEADZONE_POS = 1950
 DEADZONE_NEG = 1750
