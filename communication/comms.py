@@ -221,7 +221,7 @@ def connHandler(adc, motors,tof,hupe): # Thread, Hauptschleife für Kommunikatio
                             continue
 
                         key, value = line.split(':', 1)
-                        logging.debug(line)
+                        logging.debug(f"Nachricht per TCP empfangen: {repr(line)}")
                         incomingTcpHandler(key, value, hupe) # Verarbeitet alle eingehenden tcp-Nachrichten von Control
 
                 except Exception as e:
