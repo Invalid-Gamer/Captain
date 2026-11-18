@@ -1,5 +1,6 @@
 import board
 CSPin = board.D26
+HupePin = board.D19
 DIR1 = board.D18
 DIR2 = board.D23
 PWM1 = board.D13
